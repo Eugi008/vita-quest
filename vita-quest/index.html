@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0e0b1a" />
+<title>Vita Quest</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<style>
+:root{
+  --bg:#0e0b1a; --bg2:#161129; --panel:#1c1636; --panel2:#241b45;
+  --ink:#efe9ff; --muted:#a99fce; --line:#352a5e;
+  --gold:#f5c451; --gold2:#e0a634; --xp:#6ee7ff; --hp:#ff5470; --green:#57e39a;
+  --stat:#b98bff; --danger:#ff5470; --shadow:0 10px 30px rgba(0,0,0,.45);
+  --r:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+  background:radial-gradient(1200px 600px at 50% -10%, #241a47 0%, var(--bg) 60%) fixed;
+  color:var(--ink); min-height:100vh; -webkit-tap-highlight-color:transparent;
+}
+.app{max-width:760px;margin:0 auto;padding:16px 16px 96px}
+h1,h2,h3{margin:0}
+button{font-family:inherit;cursor:pointer;border:none;color:inherit}
+.hidden{display:none !important}
+
+/* Header */
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.crest{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(160deg,var(--gold),var(--gold2));color:#2a1c00;font-size:24px;box-shadow:var(--shadow)}
+.brand{font-weight:800;font-size:20px;letter-spacing:.5px}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--muted);letter-spacing:2px}
+
+/* Cards */
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+  border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.card h2{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* Hero */
+.hero-top{display:flex;gap:16px;align-items:center}
+.avatar{width:76px;height:76px;border-radius:18px;flex:0 0 auto;display:grid;place-items:center;font-size:40px;
+  background:radial-gradient(circle at 40% 30%,#3a2b6e,#1a1236);border:2px solid var(--gold)}
+.hero-info{flex:1;min-width:0}
+.rank{color:var(--gold);font-weight:800;font-size:20px}
+.lvl{color:var(--muted);font-size:13px}
+.lives{font-size:18px;letter-spacing:2px;margin-top:4px}
+.bar{height:12px;border-radius:8px;background:#0c0820;overflow:hidden;border:1px solid var(--line);position:relative}
+.bar>span{display:block;height:100%;border-radius:8px;transition:width .5s ease}
+.bar.xp>span{background:linear-gradient(90deg,#3aa8ff,var(--xp))}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:10px 0 4px}
+
+.stats-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.stat-row{display:flex;align-items:center;gap:10px}
+.stat-ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:18px;background:#160f31;border:1px solid var(--line)}
+.stat-main{flex:1;min-width:0}
+.stat-name{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
+.stat-name b{color:var(--stat)}
+.bar.st>span{background:linear-gradient(90deg,#7a4bd6,var(--stat))}
+
+/* Goals */
+.goal{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#170f31}
+.goal .g-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.goal h3{font-size:15px}
+.goal .meta{font-size:12px;color:var(--muted);margin:4px 0 8px}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:#2c2154;color:var(--gold);border:1px solid var(--line)}
+.bar.goal-b>span{background:linear-gradient(90deg,var(--gold2),var(--gold))}
+
+/* Challenge cards */
+.ch{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#170f31}
+.ch .ci{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px;background:#221844;border:1px solid var(--line);flex:0 0 auto}
+.ch .cbody{flex:1;min-width:0}
+.ch .cbody b{font-size:15px;display:block}
+.ch .tags{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{background:#241a45;padding:2px 7px;border-radius:6px;border:1px solid var(--line)}
+.tag.diff-facile{color:var(--green)}.tag.diff-media{color:var(--gold)}.tag.diff-difficile{color:#ff9a62}
+.btn{background:linear-gradient(160deg,var(--gold),var(--gold2));color:#2a1c00;font-weight:800;
+  border-radius:10px;padding:9px 14px;font-size:13px;white-space:nowrap;box-shadow:0 4px 12px rgba(245,196,81,.25)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);box-shadow:none;font-weight:600}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn.dng{background:linear-gradient(160deg,#ff6b82,#e03a56);color:#fff;box-shadow:none}
+.btn.full{width:100%;justify-content:center;text-align:center}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Active timer */
+.timerbox{text-align:center;padding:8px 0}
+.timer{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--xp);letter-spacing:2px}
+
+/* Boss */
+.boss{border:1px solid #4a1f38;background:linear-gradient(180deg,#2a1330,#1c0f26);border-radius:14px;padding:14px;margin-bottom:12px}
+.boss .b-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.boss h3{font-size:16px;color:#ff97b0}
+.bar.hp>span{background:linear-gradient(90deg,#ff2d55,var(--hp));transition:width .4s}
+.countdown{font-size:13px;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between}
+.countdown b{color:var(--gold)}
+.boss.late{border-color:#ff5470;box-shadow:0 0 0 1px rgba(255,84,112,.4),0 0 24px rgba(255,84,112,.15)}
+.boss.won{opacity:.7;border-color:#2f6b4a}
+.boss.won h3{color:var(--green)}
+.boss.dead{opacity:.6;border-color:#5a2130}
+
+/* Diary */
+.log{font-size:13px;border-left:2px solid var(--line);padding:6px 0 6px 12px;margin-left:4px;position:relative}
+.log:before{content:"";position:absolute;left:-5px;top:11px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.log .lx{color:var(--xp);font-weight:700}
+.log.fail:before{background:var(--danger)}.log.fail .lx{color:var(--danger)}
+.log.boss:before{background:#ff97b0}
+.log time{color:var(--muted);font-size:11px}
+
+/* Nav */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(14,11,26,.92);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);display:flex;justify-content:center;z-index:20}
+.nav-inner{display:flex;max-width:760px;width:100%}
+.nav button{flex:1;background:none;padding:10px 4px 12px;font-size:10px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;letter-spacing:.5px}
+.nav button .ni{font-size:20px}
+.nav button.on{color:var(--gold)}
+.badge{position:absolute;top:4px;right:calc(50% - 22px);background:var(--danger);color:#fff;font-size:9px;font-weight:800;border-radius:10px;padding:1px 5px}
+.nav button{position:relative}
+
+/* Empty */
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:14px}
+.empty .e-ico{font-size:40px;display:block;margin-bottom:8px;opacity:.6}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(6,4,14,.72);backdrop-filter:blur(4px);z-index:50;
+  display:flex;align-items:flex-end;justify-content:center;padding:0}
+.sheet{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);
+  border-radius:20px 20px 0 0;width:100%;max-width:760px;max-height:92vh;overflow:auto;padding:20px 18px 30px;box-shadow:0 -20px 50px rgba(0,0,0,.5)}
+@media(min-width:520px){.overlay{align-items:center}.sheet{border-radius:20px}}
+.sheet h2{font-size:18px;color:var(--gold);margin-bottom:16px}
+label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px;letter-spacing:.5px}
+input,select,textarea{width:100%;background:#120c28;border:1px solid var(--line);border-radius:10px;
+  color:var(--ink);padding:11px 12px;font-size:15px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+textarea{resize:vertical;min-height:60px}
+.field-row{display:flex;gap:10px}.field-row>div{flex:1}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:70px;background:#160f31;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;color:var(--muted);font-weight:600}
+.seg button.on{background:linear-gradient(160deg,var(--gold),var(--gold2));color:#2a1c00;border-color:transparent}
+.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+.calc-box{background:#160f31;border:1px dashed var(--gold2);border-radius:12px;padding:12px;margin-top:14px;font-size:13px}
+.calc-box b{color:var(--gold)}
+
+/* Toast */
+.toasts{position:fixed;top:16px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:100;pointer-events:none}
+.toast{background:linear-gradient(160deg,#2a2150,#1a1236);border:1px solid var(--gold);border-radius:14px;
+  padding:12px 18px;box-shadow:var(--shadow);font-weight:700;animation:pop .4s ease;max-width:90%}
+.toast .t-sub{font-weight:500;font-size:12px;color:var(--muted)}
+.toast.lvl{border-color:var(--gold);text-align:center}
+.toast.bad{border-color:var(--danger)}
+@keyframes pop{from{transform:translateY(-16px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+
+/* Wizard */
+.wiz{position:fixed;inset:0;z-index:60;background:radial-gradient(900px 500px at 50% 0%, #2a1a52, var(--bg));overflow:auto;display:flex;align-items:center;justify-content:center;padding:20px}
+.wiz-card{max-width:520px;width:100%}
+.progress-dots{display:flex;gap:6px;justify-content:center;margin-bottom:16px}
+.progress-dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.progress-dots i.on{background:var(--gold)}
+.wiz h2{font-size:22px;color:var(--gold);margin-bottom:6px}
+.wiz p.sub{color:var(--muted);font-size:14px;margin:0 0 6px}
+</style>
+</head>
+<body>
+
+<!-- ======= WIZARD (onboarding) ======= -->
+<div id="wizard" class="wiz hidden"></div>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="crest">⚔️</div>
+    <div class="brand">VITA QUEST<small>DIVENTA LA TUA LEGGENDA</small></div>
+  </div>
+
+  <div id="view"></div>
+</div>
+
+<!-- ======= NAV ======= -->
+<div class="nav"><div class="nav-inner" id="nav">
+  <button data-tab="hero" class="on"><span class="ni">🛡️</span>Eroe</button>
+  <button data-tab="challenges"><span class="ni">📜</span>Sfide</button>
+  <button data-tab="bosses"><span class="ni">🐉</span>Nemici</button>
+  <button data-tab="diary"><span class="ni">📖</span>Diario</button>
+  <button data-tab="settings"><span class="ni">⚙️</span>Setup</button>
+</div></div>
+
+<div class="toasts" id="toasts"></div>
+<div id="modal"></div>
+
+<script>
+/* ============================================================
+   VITA QUEST — RPG di crescita personale (single file + PWA)
+   Salvataggio: localStorage["vitaQuestSave"]
+   QA headless: window.__VQ
+   ============================================================ */
+
+/* ---------- BILANCIAMENTO (modifica qui) ---------- */
+const BAL = {
+  xpBase:{ facile:10, media:25, difficile:50 },
+  speedBonus:0.30,          // +30% se completi una sfida a cronometro entro il target
+  quantityBonusMax:0.50,    // fino a +50% superando il target di quantità
+  streakStep:0.05,          // +5% XP per giorno di streak sulle giornaliere
+  streakCap:1.00,           // cap +100%
+  levelBase:100, levelExp:1.5,   // XP_richiesti(L) = round(base * L^exp)
+  bossWinBonusPct:0.20,     // XP bonus = 20% della soglia del boss, alla vittoria
+  ranks:[ {min:1,name:'Novizio',ico:'🗡️'},{min:5,name:'Apprendista',ico:'🛡️'},
+          {min:10,name:'Avventuriero',ico:'⚔️'},{min:20,name:'Eroe',ico:'🏆'},
+          {min:35,name:'Campione',ico:'👑'},{min:50,name:'Leggenda',ico:'🐲'} ],
+  // Wizard: XP totali stimati per "padroneggiare" secondo l'ambizione
+  ambizione:{
+    hobby:{ label:'Hobby',        totalXP:6000,   ico:'🌱' },
+    serio:{ label:'Impegnato',    totalXP:25000,  ico:'🔥' },
+    pro:{   label:'Professionista',totalXP:90000, ico:'⭐' },
+    elite:{ label:'Élite mondiale',totalXP:260000,ico:'🌍' },
+  },
+  diffLabels:[ [0,'Rilassata'],[0.9,'Impegnativa'],[1.6,'Dura'],[2.6,'Brutale'],[4,'Incubo'] ],
+};
+
+const DEFAULT_STATS = [
+  {id:'int', nome:'Intelletto', ico:'🧠', xp:0},
+  {id:'for', nome:'Forza',      ico:'💪', xp:0},
+  {id:'dis', nome:'Disciplina', ico:'🎯', xp:0},
+  {id:'cre', nome:'Creatività', ico:'🎨', xp:0},
+  {id:'spi', nome:'Spirito',    ico:'✨', xp:0},
+];
+
+const SAVE_KEY='vitaQuestSave';
+let simOffsetMs=0;                 // per QA: sposta il "tempo" avanti
+const now = ()=> new Date(Date.now()+simOffsetMs);
+const iso = (d=now())=> d.toISOString();
+const dayKey = (d=now())=> iso(d).slice(0,10);
+let S=null, activeTab='hero', tick=null;
+
+/* ---------- STATO ---------- */
+function freshState(){
+  return {
+    version:1, onboarded:false,
+    player:{ totalXP:0, level:1, streak:0, lastActiveDate:null, vite:3, viteMax:3, hardcore:false },
+    goals:[], stats:JSON.parse(JSON.stringify(DEFAULT_STATS)),
+    challenges:[], active:[], log:[], settings:{ diffGlobale:1 }
+  };
+}
+function load(){
+  try{ const r=localStorage.getItem(SAVE_KEY); S = r? JSON.parse(r): freshState(); }
+  catch(e){ S=freshState(); }
+  if(!S.settings) S.settings={diffGlobale:1};
+}
+function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }
+
+/* ---------- MATEMATICA LIVELLI ---------- */
+const uid = ()=> 'x'+Math.random().toString(36).slice(2,9);
+function xpForLevel(L){ return Math.round(BAL.levelBase*Math.pow(L,BAL.levelExp)); }
+function cumXp(L){ let t=0; for(let i=1;i<L;i++) t+=xpForLevel(i); return t; } // XP totali per RAGGIUNGERE il livello L
+function levelFromXp(xp){ let L=1; while(cumXp(L+1)<=xp) L++; return L; }
+function rankFor(L){ let r=BAL.ranks[0]; for(const x of BAL.ranks) if(L>=x.min) r=x; return r; }
+
+/* progressione dentro il livello attuale (0..1) + testo */
+function levelProgress(xp){
+  const L=levelFromXp(xp), floor=cumXp(L), need=xpForLevel(L), into=xp-floor;
+  return { L, into, need, pct: Math.max(0,Math.min(1, into/need)) };
+}
+
+/* ---------- CALENDARIO ---------- */
+function weekStart(d=now()){ const x=new Date(d); const g=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-g); return x; }
+function daysBetween(a,b){ return Math.floor((b-a)/86400000); }
+function xpEarnedSince(ts){ return S.log.filter(l=>l.xp>0 && new Date(l.quando)>=ts).reduce((s,l)=>s+l.xp,0); }
+function xpThisWeek(){ return xpEarnedSince(weekStart()); }
+
+/* ============================================================
+   ASSEGNAZIONE XP / COMPLETAMENTI
+   ============================================================ */
+function grantXp(amount, statId){
+  amount=Math.round(amount);
+  S.player.totalXP += amount;
+  if(statId){ const st=S.stats.find(s=>s.id===statId); if(st) st.xp+=amount; }
+  const before=S.player.level; S.player.level=levelFromXp(S.player.totalXP);
+  if(S.player.level>before){
+    const r=rankFor(S.player.level);
+    toast(`${r.ico} Livello ${S.player.level}!`, `Ora sei ${r.name}`, 'lvl');
+  }
+  contributeToBosses(amount);
+}
+
+function touchStreak(){
+  const t=dayKey();
+  const last=S.player.lastActiveDate;
+  if(last===t) return;
+  if(last && daysBetween(new Date(last), now())===1) S.player.streak++;
+  else S.player.streak=1;
+  S.player.lastActiveDate=t;
+}
+
+function logEntry(o){ S.log.unshift(Object.assign({quando:iso()}, o)); if(S.log.length>400) S.log.pop(); }
+
+/* punteggio di una sfida in base a difficoltà + bonus */
+function baseXp(ch){ return (BAL.xpBase[ch.difficolta]||10); }
+
+function completeTimed(ch, secs){
+  let xp=baseXp(ch), bonusTxt=[];
+  if(ch.target>0 && secs<=ch.target*60){ xp*=1+BAL.speedBonus; bonusTxt.push(`velocità +${BAL.speedBonus*100}%`); }
+  touchStreak(); grantXp(xp, ch.statId);
+  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), tempoSec:secs});
+  save(); toast(`⚔️ +${Math.round(xp)} XP`, ch.nome + (bonusTxt.length?` · ${bonusTxt.join(', ')}`:''));
+}
+
+function completeQuantity(ch, qty){
+  let xp=baseXp(ch), bt='';
+  if(ch.target>0){ const ratio=qty/ch.target; const bonus=Math.min(BAL.quantityBonusMax, Math.max(0,ratio-1)); if(bonus>0){ xp*=1+bonus; bt=` · quantità +${Math.round(bonus*100)}%`; } }
+  touchStreak(); grantXp(xp, ch.statId);
+  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), quantita:qty});
+  save(); toast(`⚔️ +${Math.round(xp)} XP`, ch.nome+bt);
+}
+
+function completeDaily(ch){
+  const t=dayKey();
+  if(ch.lastDone===t){ toast('Già fatta oggi 👍','Torna domani per la streak','bad'); return; }
+  if(ch.lastDone && daysBetween(new Date(ch.lastDone), now())===1) ch.streak=(ch.streak||0)+1; else ch.streak=1;
+  ch.lastDone=t;
+  let xp=baseXp(ch); const sb=Math.min(BAL.streakCap, (ch.streak-1)*BAL.streakStep);
+  xp*=1+sb;
+  touchStreak(); grantXp(xp, ch.statId);
+  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp)});
+  save(); toast(`🔥 +${Math.round(xp)} XP · streak ${ch.streak}`, ch.nome + (sb>0?` · bonus +${Math.round(sb*100)}%`:''));
+}
+
+/* ============================================================
+   BOSS / NEMICI
+   ============================================================ */
+function activeBosses(){ return S.challenges.filter(c=>c.tipo==='boss' && c.bossState==='attivo'); }
+
+function contributeToBosses(amount){
+  activeBosses().forEach(b=>{
+    b.bossXp=(b.bossXp||0)+amount;
+    if(b.bossXp>=b.bossXpSoglia) winBoss(b);
+  });
+}
+function winBoss(b){
+  b.bossState='vinto';
+  const bonus=Math.round(b.bossXpSoglia*BAL.bossWinBonusPct);
+  S.player.totalXP+=bonus; S.player.level=levelFromXp(S.player.totalXP);
+  logEntry({challengeId:b.id, nome:'👑 Boss sconfitto: '+b.nome, statId:b.statId, xp:bonus, esito:'vinto', boss:true});
+  toast(`🐉 ${b.nome} sconfitto!`, `Ricompensa +${bonus} XP`);
+  if(b.autoGoalId) scheduleNextGoalBoss(b);
+}
+function failBoss(b){
+  b.bossState='fallito';
+  const pen=b.bossPenalita||'xpRun';
+  let msg='';
+  if(pen==='xpRun'){ const lost=b.bossXp||0; S.player.totalXP=Math.max(0,S.player.totalXP-lost); msg=`Persi ${lost} XP`; }
+  else if(pen==='livello'){ const nl=Math.max(1,S.player.level-1); S.player.totalXP=cumXp(nl); msg='Sceso di un livello'; }
+  else if(pen==='vita'){ S.player.vite=Math.max(0,S.player.vite-1); msg=`Persa una vita (${S.player.vite}/${S.player.viteMax})`;
+      if(S.player.vite<=0 && S.player.hardcore){ resetCharacter(); msg='☠️ PERMADEATH — personaggio azzerato'; } }
+  S.player.level=levelFromXp(S.player.totalXP);
+  logEntry({challengeId:b.id, nome:'💀 Sconfitto da: '+b.nome, statId:b.statId, xp:0, esito:'fallito', boss:true});
+  toast(`💀 ${b.nome} ti ha sconfitto`, msg,'bad');
+  if(b.autoGoalId) scheduleNextGoalBoss(b);
+}
+function resetCharacter(){
+  S.player.totalXP=0; S.player.level=1; S.player.streak=0; S.player.vite=S.player.viteMax;
+  S.stats.forEach(s=>s.xp=0);
+}
+
+/* boss automatici settimanali generati dagli obiettivi */
+function scheduleNextGoalBoss(prev){
+  // ne crea uno nuovo per la settimana successiva, stessa quota
+  const g=S.goals.find(x=>x.id===prev.autoGoalId); if(!g) return;
+  if(S.challenges.some(c=>c.tipo==='boss'&&c.bossState==='attivo'&&c.autoGoalId===g.id)) return;
+  createGoalBoss(g);
+}
+function createGoalBoss(g){
+  const end=weekStart(); end.setDate(end.getDate()+7); end.setHours(23,59,59);
+  S.challenges.unshift({
+    id:uid(), nome:'Quota settimanale: '+g.nome, statId:g.statId||S.stats[0].id, difficolta:'difficile',
+    tipo:'boss', bossState:'attivo', bossXp:0, bossXpSoglia:Math.round(g.quotaSettimanale),
+    bossStart:iso(), bossDeadline:iso(end), bossPenalita:g.bossPenalita||'xpRun', autoGoalId:g.id, note:''
+  });
+}
+
+/* controllo scadenze all'avvio / cambio giorno */
+function checkBosses(){
+  const t=now();
+  activeBosses().forEach(b=>{ if(b.bossDeadline && new Date(b.bossDeadline)<t){ if((b.bossXp||0)>=b.bossXpSoglia) winBoss(b); else failBoss(b); } });
+}
+function dayChangeCheck(){
+  // streak persa se salti un giorno
+  const last=S.player.lastActiveDate;
+  if(last && daysBetween(new Date(last), now())>1) S.player.streak=0;
+  // assicura boss automatici per gli obiettivi con autoBoss
+  S.goals.filter(g=>g.autoBoss).forEach(g=>{
+    if(!S.challenges.some(c=>c.tipo==='boss'&&c.bossState==='attivo'&&c.autoGoalId===g.id)) createGoalBoss(g);
+  });
+  checkBosses();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const $=(s,r=document)=>r.querySelector(s);
+const el=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstElementChild;};
+const esc=(s)=>String(s??'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+function render(){
+  const v=$('#view'); v.innerHTML='';
+  ({hero:renderHero, challenges:renderChallenges, bosses:renderBosses, diary:renderDiary, settings:renderSettings}[activeTab])(v);
+  // nav highlight + badge
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===activeTab));
+  const bBadge=activeBosses().length;
+  const bossBtn=document.querySelector('#nav button[data-tab="bosses"]');
+  let old=bossBtn.querySelector('.badge'); if(old) old.remove();
+  if(bBadge) bossBtn.appendChild(el(`<span class="badge">${bBadge}</span>`));
+}
+
+function renderHero(v){
+  const p=S.player, lp=levelProgress(p.totalXP), r=rankFor(p.level);
+  const lives='❤️'.repeat(p.vite)+'🖤'.repeat(Math.max(0,p.viteMax-p.vite));
+  v.appendChild(el(`
+  <div class="card">
+    <div class="hero-top">
+      <div class="avatar">${r.ico}</div>
+      <div class="hero-info">
+        <div class="rank">${r.name}</div>
+        <div class="lvl">Livello ${p.level} · ${p.totalXP} XP totali · 🔥 ${p.streak} giorni</div>
+        <div class="lives">${lives}</div>
+      </div>
+    </div>
+    <div class="bar-label"><span>Livello ${lp.L}</span><span>${lp.into}/${lp.need} XP</span></div>
+    <div class="bar xp"><span style="width:${lp.pct*100}%"></span></div>
+  </div>`));
+
+  // Statistiche
+  const sc=el(`<div class="card"><h2>📊 Statistiche</h2><div class="stats-grid"></div></div>`);
+  const grid=$('.stats-grid',sc);
+  S.stats.forEach(st=>{
+    const sp=levelProgress(st.xp);
+    grid.appendChild(el(`
+      <div class="stat-row">
+        <div class="stat-ico">${st.ico||'⭐'}</div>
+        <div class="stat-main">
+          <div class="stat-name"><span>${esc(st.nome)} <b>Lv ${sp.L}</b></span><span>${st.xp} XP</span></div>
+          <div class="bar st"><span style="width:${sp.pct*100}%"></span></div>
+        </div>
+      </div>`));
+  });
+  v.appendChild(sc);
+
+  // Grandi Obiettivi
+  const gc=el(`<div class="card"><h2>🎯 Grandi Obiettivi</h2></div>`);
+  if(!S.goals.length){ gc.appendChild(el(`<div class="empty"><span class="e-ico">🗺️</span>Nessun obiettivo. Aggiungilo dal Setup per calibrare le sfide.</div>`)); }
+  S.goals.forEach(g=>{
+    const earned=xpThisWeek(), pct=Math.min(1, earned/Math.max(1,g.quotaSettimanale));
+    const dl = g.deadline? new Date(g.deadline).toLocaleDateString('it-IT'):'—';
+    gc.appendChild(el(`
+      <div class="goal">
+        <div class="g-top"><h3>${esc(g.nome)}</h3><span class="pill">${BAL.ambizione[g.ambizione]?.ico||''} ${BAL.ambizione[g.ambizione]?.label||''}</span></div>
+        <div class="meta">Traguardo: ${dl} · quota ~${g.quotaSettimanale} XP/sett · difficoltà <b>${diffLabel(g.diffMoltiplicatore)}</b></div>
+        <div class="bar-label"><span>Questa settimana</span><span>${earned}/${g.quotaSettimanale} XP</span></div>
+        <div class="bar goal-b"><span style="width:${pct*100}%"></span></div>
+      </div>`));
+  });
+  v.appendChild(gc);
+}
+
+function chIco(t){ return {cronometro:'⏱️',obiettivo:'🎯',giornaliera:'🔥',boss:'🐉'}[t]||'📜'; }
+function statName(id){ const s=S.stats.find(x=>x.id===id); return s?s.nome:'—'; }
+
+function renderChallenges(v){
+  // timer attivo
+  const act=S.active[0];
+  if(act){
+    const ch=S.challenges.find(c=>c.id===act.challengeId);
+    if(ch){
+      const box=el(`<div class="card"><h2>⏱️ In corso</h2>
+        <div class="timerbox"><div class="timer" id="livetimer">00:00</div><div class="hint">${esc(ch.nome)}${ch.target?` · obiettivo ${ch.target} min`:''}</div></div>
+        <div class="row-btns" style="margin-top:12px">
+          <button class="btn full" id="finishTimer">✅ Completa</button>
+          <button class="btn ghost" id="cancelTimer">Annulla</button>
+        </div></div>`);
+      v.appendChild(box);
+      $('#finishTimer',box).onclick=()=>{ const secs=Math.round((Date.now()+simOffsetMs-new Date(act.startedAt).getTime())/1000); S.active=[]; completeTimed(ch,secs); render(); };
+      $('#cancelTimer',box).onclick=()=>{ S.active=[]; save(); render(); };
+      startTick();
+    }
+  }
+
+  const head=el(`<div class="card"><h2>📜 Le tue sfide</h2>
+    <button class="btn full" id="newCh">➕ Nuova sfida</button></div>`);
+  v.appendChild(head);
+  $('#newCh',head).onclick=()=>openChallengeModal();
+
+  const list=S.challenges.filter(c=>c.tipo!=='boss');
+  if(!list.length){ v.appendChild(el(`<div class="empty"><span class="e-ico">📜</span>Ancora nessuna sfida.<br>Crea la tua prima impresa!</div>`)); return; }
+
+  const wrap=el(`<div></div>`);
+  list.forEach(ch=>{
+    const done = ch.tipo==='giornaliera' && ch.lastDone===dayKey();
+    const cta = ch.tipo==='cronometro' ? 'Avvia' : (ch.tipo==='giornaliera' ? (done?'Fatta ✓':'Segna fatto') : 'Segna fatto');
+    const row=el(`
+      <div class="ch">
+        <div class="ci">${chIco(ch.tipo)}</div>
+        <div class="cbody">
+          <b>${esc(ch.nome)}</b>
+          <div class="tags">
+            <span class="tag">${statName(ch.statId)}</span>
+            <span class="tag diff-${ch.difficolta}">${ch.difficolta}</span>
+            ${ch.tipo==='giornaliera'?`<span class="tag">🔥 ${ch.streak||0}</span>`:''}
+            ${ch.target?`<span class="tag">🎯 ${ch.target}${ch.tipo==='cronometro'?' min':''}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <button class="btn sm ${done?'ghost':''}" ${done?'disabled':''}>${cta}</button>
+          <button class="btn ghost sm edit">⋯</button>
+        </div>
+      </div>`);
+    const [actBtn,editBtn]=row.querySelectorAll('button');
+    actBtn.onclick=()=>doChallenge(ch);
+    editBtn.onclick=()=>openChallengeModal(ch);
+    wrap.appendChild(row);
+  });
+  v.appendChild(wrap);
+}
+
+function doChallenge(ch){
+  if(ch.tipo==='cronometro'){ S.active=[{challengeId:ch.id, startedAt:iso()}]; save(); render(); }
+  else if(ch.tipo==='giornaliera'){ completeDaily(ch); render(); }
+  else if(ch.tipo==='obiettivo'){
+    openQtyModal(ch);
+  }
+}
+
+function renderBosses(v){
+  const head=el(`<div class="card"><h2>🐉 Nemici</h2>
+    <p class="hint">Sfide a scadenza: raggiungi la soglia di XP entro il tempo o subisci la penalità.</p>
+    <button class="btn full" id="newBoss" style="margin-top:10px">➕ Evoca un nemico</button></div>`);
+  v.appendChild(head);
+  $('#newBoss',head).onclick=()=>openBossModal();
+
+  const bosses=S.challenges.filter(c=>c.tipo==='boss');
+  if(!bosses.length){ v.appendChild(el(`<div class="empty"><span class="e-ico">🐉</span>Nessun nemico all'orizzonte.<br>Evocane uno per alzare la posta.</div>`)); return; }
+
+  bosses.sort((a,b)=> (a.bossState==='attivo'?0:1)-(b.bossState==='attivo'?0:1));
+  bosses.forEach(b=>{
+    const prog=Math.min(1,(b.bossXp||0)/b.bossXpSoglia);
+    const hpLeft=Math.round((1-prog)*100);
+    const ms=new Date(b.bossDeadline)-now(); const late=ms<0;
+    const st=b.bossState;
+    const cls = st==='vinto'?'won': st==='fallito'?'dead': (late?'late':'');
+    const penName={xpRun:'perdi gli XP accumulati',livello:'scendi di livello',vita:'perdi una vita'}[b.bossPenalita]||'';
+    const box=el(`
+      <div class="boss ${cls}">
+        <div class="b-top">
+          <h3>${st==='vinto'?'👑 ':st==='fallito'?'💀 ':'🐉 '}${esc(b.nome)}</h3>
+          ${st==='attivo'?`<button class="btn ghost sm del">✕</button>`:''}
+        </div>
+        <div class="bar-label"><span>HP nemico</span><span>${b.bossXp||0}/${b.bossXpSoglia} XP</span></div>
+        <div class="bar hp"><span style="width:${hpLeft}%"></span></div>
+        <div class="countdown">
+          <span>${st==='attivo'?(late?'⏰ scaduto':`⏳ ${fmtLeft(ms)}`):(st==='vinto'?'Sconfitto ✔':'Fallito ✖')}</span>
+          <span>Penalità: <b>${penName}</b></span>
+        </div>
+      </div>`);
+    const del=box.querySelector('.del'); if(del) del.onclick=()=>{ if(confirm('Ritirare questo nemico?')){ S.challenges=S.challenges.filter(x=>x.id!==b.id); save(); render(); } };
+    v.appendChild(box);
+  });
+  startTick();
+}
+
+function fmtLeft(ms){
+  if(ms<0) return 'scaduto';
+  const s=Math.floor(ms/1000), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
+  if(d>0) return `${d}g ${h}h`; if(h>0) return `${h}h ${m}m`; return `${m}m`;
+}
+
+function renderDiary(v){
+  const c=el(`<div class="card"><h2>📖 Diario delle imprese</h2></div>`);
+  if(!S.log.length){ c.appendChild(el(`<div class="empty"><span class="e-ico">📖</span>Le tue gesta appariranno qui.</div>`)); }
+  S.log.slice(0,80).forEach(l=>{
+    const d=new Date(l.quando).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const cls=l.esito==='fallito'?'fail':(l.boss?'boss':'');
+    const extra=l.tempoSec?` · ${Math.floor(l.tempoSec/60)}m ${l.tempoSec%60}s`:(l.quantita?` · x${l.quantita}`:'');
+    c.appendChild(el(`<div class="log ${cls}"><div>${esc(l.nome)} ${l.xp>0?`<span class="lx">+${l.xp} XP</span>`:''}${extra}</div><time>${d}</time></div>`));
+  });
+  v.appendChild(c);
+}
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function diffLabel(m){ let lab='—'; for(const [t,l] of BAL.diffLabels) if(m>=t) lab=l; return lab; }
+
+function renderSettings(v){
+  const p=S.player;
+  // Obiettivi
+  const g=el(`<div class="card"><h2>🎯 Grandi Obiettivi</h2>
+    <p class="hint">Ogni obiettivo calibra la quota XP settimanale e la difficoltà in base al traguardo e al tempo.</p>
+    <div id="goalList"></div>
+    <button class="btn full" id="addGoal" style="margin-top:10px">➕ Aggiungi obiettivo</button></div>`);
+  const gl=$('#goalList',g);
+  S.goals.forEach(go=>{
+    const dl=go.deadline?new Date(go.deadline).toLocaleDateString('it-IT'):'—';
+    const row=el(`<div class="goal"><div class="g-top"><h3>${esc(go.nome)}</h3>
+      <button class="btn ghost sm gdel">✕</button></div>
+      <div class="meta">${dl} · ~${go.quotaSettimanale} XP/sett · ${diffLabel(go.diffMoltiplicatore)} ${go.autoBoss?'· 🐉 boss auto':''}</div></div>`);
+    row.querySelector('.gdel').onclick=()=>{ S.goals=S.goals.filter(x=>x.id!==go.id); save(); render(); };
+    gl.appendChild(row);
+  });
+  $('#addGoal',g).onclick=()=>openGoalModal();
+  v.appendChild(g);
+
+  // Statistiche
+  const sc=el(`<div class="card"><h2>📊 Statistiche</h2><div id="statList"></div>
+    <div class="field-row" style="margin-top:10px">
+      <div><input id="newStatName" placeholder="Nuova statistica"/></div>
+      <button class="btn" id="addStat">Aggiungi</button>
+    </div></div>`);
+  const stl=$('#statList',sc);
+  S.stats.forEach(st=>{
+    const row=el(`<div class="ch"><div class="ci">${st.ico||'⭐'}</div>
+      <div class="cbody"><input value="${esc(st.nome)}" data-id="${st.id}" class="statRename" style="border:none;background:transparent;padding:4px 0"/></div>
+      <button class="btn ghost sm sdel">✕</button></div>`);
+    row.querySelector('.statRename').onchange=(e)=>{ st.nome=e.target.value||st.nome; save(); };
+    row.querySelector('.sdel').onclick=()=>{ if(S.stats.length<=1) return; S.stats=S.stats.filter(x=>x.id!==st.id); save(); render(); };
+    stl.appendChild(row);
+  });
+  $('#addStat',sc).onclick=()=>{ const n=$('#newStatName',sc).value.trim(); if(!n)return; S.stats.push({id:uid(),nome:n,ico:'⭐',xp:0}); save(); render(); };
+  v.appendChild(sc);
+
+  // Difficoltà globale + vite
+  const opt=el(`<div class="card"><h2>⚙️ Regolazioni</h2>
+    <label>Difficoltà globale — scala le quote/soglie (${diffLabel(S.settings.diffGlobale)})</label>
+    <input type="range" id="diffG" min="0.5" max="4" step="0.1" value="${S.settings.diffGlobale}"/>
+    <div class="hint">Più alta = quote e nemici più esigenti. Attuale ×${S.settings.diffGlobale}</div>
+    <label style="margin-top:14px">Vite massime</label>
+    <div class="field-row"><div><input type="number" id="viteMax" min="1" max="9" value="${p.viteMax}"/></div>
+      <div><input type="number" id="vite" min="0" max="9" value="${p.vite}"/></div></div>
+    <div class="hint">Sinistra: massimo · Destra: vite attuali</div>
+    <label style="margin-top:14px;display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="hardcore" ${p.hardcore?'checked':''} style="width:auto"/> Modalità Hardcore (permadeath a 0 vite)</label>
+  </div>`);
+  $('#diffG',opt).oninput=(e)=>{ S.settings.diffGlobale=parseFloat(e.target.value); save(); };
+  $('#diffG',opt).onchange=()=>render();
+  $('#viteMax',opt).onchange=(e)=>{ p.viteMax=Math.max(1,+e.target.value||3); save(); };
+  $('#vite',opt).onchange=(e)=>{ p.vite=Math.max(0,+e.target.value||0); save(); render(); };
+  $('#hardcore',opt).onchange=(e)=>{ p.hardcore=e.target.checked; save(); };
+  v.appendChild(opt);
+
+  // Backup
+  const bk=el(`<div class="card"><h2>💾 Backup & Dati</h2>
+    <p class="hint">I dati restano su questo dispositivo. Esporta per spostarli su un altro (es. dal PC al telefono).</p>
+    <div class="row-btns" style="margin-top:10px">
+      <button class="btn" id="exp">⬇️ Esporta</button>
+      <button class="btn ghost" id="imp">⬆️ Importa</button>
+      <button class="btn dng" id="reset">🗑️ Reset totale</button>
+    </div>
+    <input type="file" id="impFile" accept="application/json" class="hidden"/></div>`);
+  $('#exp',bk).onclick=exportData;
+  $('#imp',bk).onclick=()=>$('#impFile',bk).click();
+  $('#impFile',bk).onchange=importData;
+  $('#reset',bk).onclick=()=>{ if(confirm('Cancellare TUTTO e ricominciare da zero?')){ localStorage.removeItem(SAVE_KEY); location.reload(); } };
+  v.appendChild(bk);
+}
+
+/* ============================================================
+   MODALI
+   ============================================================ */
+function closeModal(){ $('#modal').innerHTML=''; }
+function sheet(html){
+  const o=el(`<div class="overlay"><div class="sheet">${html}</div></div>`);
+  o.onclick=(e)=>{ if(e.target===o) closeModal(); };
+  $('#modal').innerHTML=''; $('#modal').appendChild(o); return o;
+}
+
+let chDraft=null;
+function openChallengeModal(ch){
+  chDraft = ch ? Object.assign({},ch) : {id:null,nome:'',statId:S.stats[0].id,difficolta:'media',tipo:'cronometro',target:'',note:''};
+  const o=sheet(`
+    <h2>${ch?'Modifica sfida':'Nuova sfida'}</h2>
+    <label>Nome</label>
+    <input id="f_nome" placeholder="Es. Leggi 20 pagine di..." value="${esc(chDraft.nome)}"/>
+    <label>Tipo</label>
+    <div class="seg" id="f_tipo">
+      <button data-v="cronometro">⏱️ Cronometro</button>
+      <button data-v="obiettivo">🎯 Obiettivo</button>
+      <button data-v="giornaliera">🔥 Giornaliera</button>
+    </div>
+    <label>Statistica allenata</label>
+    <select id="f_stat">${S.stats.map(s=>`<option value="${s.id}" ${s.id===chDraft.statId?'selected':''}>${esc(s.nome)}</option>`).join('')}</select>
+    <label>Difficoltà</label>
+    <div class="seg" id="f_diff">
+      <button data-v="facile">Facile</button><button data-v="media">Media</button><button data-v="difficile">Difficile</button>
+    </div>
+    <label id="f_targetLbl">Obiettivo (minuti)</label>
+    <input id="f_target" type="number" min="0" placeholder="opzionale" value="${chDraft.target||''}"/>
+    <div class="hint" id="f_targetHint"></div>
+    <label>Note</label>
+    <textarea id="f_note" placeholder="Dettagli...">${esc(chDraft.note||'')}</textarea>
+    <div class="row-btns" style="margin-top:18px">
+      <button class="btn full" id="f_save">Salva</button>
+      ${ch?'<button class="btn dng" id="f_del">Elimina</button>':''}
+      <button class="btn ghost" id="f_cancel">Annulla</button>
+    </div>`);
+  const setSeg=(wrap,val)=>wrap.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===val));
+  setSeg($('#f_tipo',o),chDraft.tipo); setSeg($('#f_diff',o),chDraft.difficolta);
+  const syncTarget=()=>{
+    const t=chDraft.tipo;
+    $('#f_targetLbl',o).textContent = t==='cronometro'?'Obiettivo tempo (minuti)': t==='obiettivo'?'Obiettivo quantità':'Obiettivo (facoltativo)';
+    $('#f_targetHint',o).textContent = t==='cronometro'?'Se finisci entro il tempo → bonus velocità +30%.': t==='obiettivo'?'Superare il target dà bonus quantità fino a +50%.':'Le giornaliere accumulano streak con bonus crescente.';
+  };
+  syncTarget();
+  $('#f_tipo',o).querySelectorAll('button').forEach(b=>b.onclick=()=>{ chDraft.tipo=b.dataset.v; setSeg($('#f_tipo',o),b.dataset.v); syncTarget(); });
+  $('#f_diff',o).querySelectorAll('button').forEach(b=>b.onclick=()=>{ chDraft.difficolta=b.dataset.v; setSeg($('#f_diff',o),b.dataset.v); });
+  $('#f_cancel',o).onclick=closeModal;
+  if(ch) $('#f_del',o).onclick=()=>{ S.challenges=S.challenges.filter(x=>x.id!==ch.id); save(); closeModal(); render(); };
+  $('#f_save',o).onclick=()=>{
+    const nome=$('#f_nome',o).value.trim(); if(!nome){ $('#f_nome',o).focus(); return; }
+    const obj={ nome, statId:$('#f_stat',o).value, difficolta:chDraft.difficolta, tipo:chDraft.tipo,
+      target: parseFloat($('#f_target',o).value)||0, note:$('#f_note',o).value.trim() };
+    if(ch){ Object.assign(ch,obj); }
+    else { S.challenges.unshift(Object.assign({id:uid(),streak:0,lastDone:null},obj)); }
+    save(); closeModal(); render();
+  };
+}
+
+function openQtyModal(ch){
+  const o=sheet(`<h2>${esc(ch.nome)}</h2>
+    <label>Quanto hai completato?${ch.target?` (obiettivo ${ch.target})`:''}</label>
+    <input id="q_val" type="number" min="0" value="${ch.target||1}" autofocus/>
+    <div class="row-btns" style="margin-top:16px">
+      <button class="btn full" id="q_ok">Registra</button>
+      <button class="btn ghost" id="q_cancel">Annulla</button></div>`);
+  $('#q_cancel',o).onclick=closeModal;
+  $('#q_ok',o).onclick=()=>{ const q=parseFloat($('#q_val',o).value)||0; closeModal(); completeQuantity(ch,q); render(); };
+}
+
+function openBossModal(){
+  const o=sheet(`<h2>🐉 Evoca un nemico</h2>
+    <p class="hint">Un boss è una scadenza: raggiungi la soglia di XP entro il tempo o subisci la penalità.</p>
+    <label>Nome del nemico</label>
+    <input id="b_nome" placeholder="Es. La Bestia della Pigrizia"/>
+    <div class="field-row">
+      <div><label>Soglia XP da battere</label><input id="b_soglia" type="number" min="10" value="300"/></div>
+      <div><label>Scadenza tra (giorni)</label><input id="b_giorni" type="number" min="1" value="7"/></div>
+    </div>
+    <label>Statistica</label>
+    <select id="b_stat">${S.stats.map(s=>`<option value="${s.id}">${esc(s.nome)}</option>`).join('')}</select>
+    <label>Se fallisci...</label>
+    <div class="seg" id="b_pen">
+      <button data-v="xpRun" class="on">Perdi gli XP</button>
+      <button data-v="livello">Scendi di livello</button>
+      <button data-v="vita">Perdi una vita</button>
+    </div>
+    <div class="row-btns" style="margin-top:18px">
+      <button class="btn full" id="b_ok">Evoca</button>
+      <button class="btn ghost" id="b_cancel">Annulla</button></div>`);
+  let pen='xpRun';
+  $('#b_pen',o).querySelectorAll('button').forEach(b=>b.onclick=()=>{ pen=b.dataset.v; $('#b_pen',o).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
+  $('#b_cancel',o).onclick=closeModal;
+  $('#b_ok',o).onclick=()=>{
+    const nome=$('#b_nome',o).value.trim()||'Nemico'; const soglia=Math.max(10,+$('#b_soglia',o).value||300);
+    const giorni=Math.max(1,+$('#b_giorni',o).value||7);
+    const dl=now(); dl.setDate(dl.getDate()+giorni);
+    S.challenges.unshift({id:uid(),nome,statId:$('#b_stat',o).value,difficolta:'difficile',tipo:'boss',
+      bossState:'attivo',bossXp:0,bossXpSoglia:soglia,bossStart:iso(),bossDeadline:iso(dl),bossPenalita:pen,note:''});
+    save(); closeModal(); render();
+  };
+}
+
+/* ---------- Modale obiettivo (con calibrazione) ---------- */
+function calcGoal(ambizione, deadlineStr, diffG){
+  const amb=BAL.ambizione[ambizione]||BAL.ambizione.serio;
+  let weeks=52;
+  if(deadlineStr){ const ms=new Date(deadlineStr)-now(); weeks=Math.max(1, Math.ceil(ms/604800000)); }
+  const quota=Math.ceil(amb.totalXP/weeks*diffG);
+  const molt=quota/300; // rating difficoltà
+  return { quotaSettimanale:quota, weeks, diffMoltiplicatore:molt };
+}
+function openGoalModal(){
+  const dG=S.settings.diffGlobale;
+  const o=sheet(`<h2>🎯 Nuovo grande obiettivo</h2>
+    <label>Qual è il tuo grande traguardo?</label>
+    <input id="g_nome" placeholder="Es. Diventare n°1 nel tennis"/>
+    <label>Statistica principale</label>
+    <select id="g_stat">${S.stats.map(s=>`<option value="${s.id}">${esc(s.nome)}</option>`).join('')}</select>
+    <label>Quanto in alto punti?</label>
+    <div class="seg" id="g_amb">
+      ${Object.entries(BAL.ambizione).map(([k,a],i)=>`<button data-v="${k}" ${i===1?'class="on"':''}>${a.ico} ${a.label}</button>`).join('')}
+    </div>
+    <label>Entro quando? (data traguardo)</label>
+    <input id="g_dl" type="date"/>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:14px">
+      <input type="checkbox" id="g_boss" checked style="width:auto"/> Genera un nemico settimanale automatico per la quota</label>
+    <div class="calc-box" id="g_calc"></div>
+    <div class="row-btns" style="margin-top:18px">
+      <button class="btn full" id="g_ok">Crea obiettivo</button>
+      <button class="btn ghost" id="g_cancel">Annulla</button></div>`);
+  let amb='serio';
+  const recalc=()=>{
+    const c=calcGoal(amb,$('#g_dl',o).value,dG);
+    $('#g_calc',o).innerHTML=`📈 Per centrare questo traguardo servono circa <b>${c.quotaSettimanale} XP a settimana</b> (~${Math.ceil(c.quotaSettimanale/7)}/giorno).<br>Difficoltà stimata: <b>${diffLabel(c.diffMoltiplicatore)}</b> · orizzonte ${c.weeks} settimane.`;
+    o._calc=c;
+  };
+  $('#g_amb',o).querySelectorAll('button').forEach(b=>b.onclick=()=>{ amb=b.dataset.v; $('#g_amb',o).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); recalc(); });
+  $('#g_dl',o).onchange=recalc; recalc();
+  $('#g_cancel',o).onclick=closeModal;
+  $('#g_ok',o).onclick=()=>{
+    const nome=$('#g_nome',o).value.trim(); if(!nome){ $('#g_nome',o).focus(); return; }
+    const c=o._calc;
+    const g={ id:uid(), nome, statId:$('#g_stat',o).value, ambizione:amb, deadline:$('#g_dl',o).value||null,
+      quotaSettimanale:c.quotaSettimanale, diffMoltiplicatore:c.diffMoltiplicatore,
+      autoBoss:$('#g_boss',o).checked, bossPenalita:'xpRun' };
+    S.goals.push(g);
+    if(g.autoBoss) createGoalBoss(g);
+    save(); closeModal(); render();
+  };
+}
+
+/* ============================================================
+   TIMER LIVE / TOAST / BACKUP
+   ============================================================ */
+function startTick(){ if(tick) return; tick=setInterval(()=>{
+  const t=$('#livetimer'); const act=S.active[0];
+  if(t&&act){ const s=Math.floor((Date.now()+simOffsetMs-new Date(act.startedAt).getTime())/1000);
+    t.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+  document.querySelectorAll('.boss.late,.boss').forEach(()=>{}); // (i countdown si aggiornano al re-render)
+  if(!t && !document.querySelector('.boss')){ clearInterval(tick); tick=null; }
+},1000); }
+
+function toast(title, sub='', cls=''){
+  const t=el(`<div class="toast ${cls}"><div>${esc(title)}</div>${sub?`<div class="t-sub">${esc(sub)}</div>`:''}</div>`);
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, cls==='lvl'?3200:2400);
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='vita-quest-backup-'+dayKey()+'.json'; a.click();
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>{ try{ S=JSON.parse(r.result); save(); location.reload(); }catch(err){ alert('File non valido'); } };
+  r.readAsText(f);
+}
+
+/* ============================================================
+   WIZARD ONBOARDING
+   ============================================================ */
+function runWizard(){
+  const w=$('#wizard'); w.classList.remove('hidden');
+  let step=0, name='', amb='serio', dl='', stat=S.stats[0].id;
+  const dots=(n)=>`<div class="progress-dots">${[0,1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
+  const draw=()=>{
+    if(step===0){ w.innerHTML=`<div class="wiz-card card">${dots(0)}
+      <h2>Benvenuto, avventuriero ⚔️</h2>
+      <p class="sub">Vita Quest trasforma i tuoi obiettivi reali in un gioco di ruolo. Ogni sfida che completi ti rende più forte.</p>
+      <p class="sub" style="margin-top:8px">Prima di partire, definiamo il tuo <b>grande traguardo</b>: sarà lui a decidere quanto dovrai essere feroce.</p>
+      <button class="btn full" style="margin-top:18px" id="w_next">Inizia →</button>
+      <button class="btn ghost full" style="margin-top:8px" id="w_skip">Salta, esploro da solo</button></div>`;
+      $('#w_next',w).onclick=()=>{step=1;draw();}; $('#w_skip',w).onclick=finishWizard;
+    }
+    else if(step===1){ w.innerHTML=`<div class="wiz-card card">${dots(1)}
+      <h2>Il tuo grande traguardo</h2>
+      <label>Cosa vuoi diventare / ottenere?</label>
+      <input id="w_name" placeholder="Es. Diventare n°1 nel tennis" value="${esc(name)}"/>
+      <label>Statistica principale che allena</label>
+      <select id="w_stat">${S.stats.map(s=>`<option value="${s.id}" ${s.id===stat?'selected':''}>${esc(s.nome)}</option>`).join('')}</select>
+      <button class="btn full" style="margin-top:18px" id="w_next">Continua →</button>
+      <button class="btn ghost full" style="margin-top:8px" id="w_back">Indietro</button></div>`;
+      $('#w_next',w).onclick=()=>{ name=$('#w_name',w).value.trim(); stat=$('#w_stat',w).value; if(!name){$('#w_name',w).focus();return;} step=2;draw();};
+      $('#w_back',w).onclick=()=>{step=0;draw();};
+    }
+    else if(step===2){ w.innerHTML=`<div class="wiz-card card">${dots(2)}
+      <h2>Quanto in alto punti?</h2>
+      <p class="sub">Più è ambizioso, più le sfide saranno dure.</p>
+      <div class="seg" id="w_amb" style="flex-direction:column">
+        ${Object.entries(BAL.ambizione).map(([k,a])=>`<button data-v="${k}" class="${k===amb?'on':''}" style="text-align:left">${a.ico} <b>${a.label}</b></button>`).join('')}
+      </div>
+      <label style="margin-top:14px">Entro quando vuoi arrivarci?</label>
+      <input id="w_dl" type="date" value="${dl}"/>
+      <button class="btn full" style="margin-top:18px" id="w_next">Continua →</button>
+      <button class="btn ghost full" style="margin-top:8px" id="w_back">Indietro</button></div>`;
+      $('#w_amb',w).querySelectorAll('button').forEach(b=>b.onclick=()=>{amb=b.dataset.v;$('#w_amb',w).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
+      $('#w_next',w).onclick=()=>{ dl=$('#w_dl',w).value; step=3;draw();};
+      $('#w_back',w).onclick=()=>{step=1;draw();};
+    }
+    else if(step===3){
+      const c=calcGoal(amb,dl,S.settings.diffGlobale);
+      w.innerHTML=`<div class="wiz-card card">${dots(3)}
+        <h2>Il tuo destino è scritto ✨</h2>
+        <div class="calc-box">🎯 <b>${esc(name)}</b><br><br>
+          📈 Quota necessaria: <b>${c.quotaSettimanale} XP a settimana</b> (~${Math.ceil(c.quotaSettimanale/7)}/giorno)<br>
+          🔥 Difficoltà: <b>${diffLabel(c.diffMoltiplicatore)}</b><br>
+          ⏳ Orizzonte: <b>${c.weeks} settimane</b></div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:14px">
+          <input type="checkbox" id="w_boss" checked style="width:auto"/> Evoca ogni settimana un <b>nemico</b> che difende questa quota</label>
+        <button class="btn full" style="margin-top:18px" id="w_done">⚔️ Comincia l'avventura</button>
+        <button class="btn ghost full" style="margin-top:8px" id="w_back">Indietro</button></div>`;
+      $('#w_done',w).onclick=()=>{
+        const c2=calcGoal(amb,dl,S.settings.diffGlobale);
+        const g={id:uid(),nome:name,statId:stat,ambizione:amb,deadline:dl||null,
+          quotaSettimanale:c2.quotaSettimanale,diffMoltiplicatore:c2.diffMoltiplicatore,
+          autoBoss:$('#w_boss',w).checked,bossPenalita:'xpRun'};
+        S.goals.push(g); if(g.autoBoss) createGoalBoss(g);
+        finishWizard();
+      };
+      $('#w_back',w).onclick=()=>{step=2;draw();};
+    }
+  };
+  draw();
+}
+function finishWizard(){ S.onboarded=true; save(); $('#wizard').classList.add('hidden'); $('#wizard').innerHTML=''; render(); }
+
+/* ============================================================
+   AVVIO
+   ============================================================ */
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ activeTab=b.dataset.tab; render(); });
+
+function boot(){
+  load(); dayChangeCheck(); save();
+  if(!S.onboarded){ runWizard(); } else { render(); }
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').catch(()=>{}); }
+}
+boot();
+
+/* ---------- QA HEADLESS ---------- */
+window.__VQ={
+  get state(){return S;},
+  save, render, load,
+  addDays(n){ simOffsetMs+=n*86400000; dayChangeCheck(); save(); render(); return dayKey(); },
+  setSim(ms){ simOffsetMs=ms; },
+  grant(xp,stat){ touchStreak(); grantXp(xp,stat); save(); render(); },
+  addXpRaw(xp){ S.player.totalXP+=xp; S.player.level=levelFromXp(S.player.totalXP); contributeToBosses(xp); save(); render(); },
+  checkBosses(){ checkBosses(); save(); render(); },
+  reset(){ localStorage.removeItem(SAVE_KEY); location.reload(); },
+  levelFromXp, cumXp, xpForLevel, calcGoal
+};
+</script>
+</body>
+</html>
