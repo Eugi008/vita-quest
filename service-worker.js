@@ -1,5 +1,5 @@
 /* Vita Quest — service worker (offline cache) */
-const CACHE = 'vita-quest-v1';
+const CACHE = 'vita-quest-v4';
 const ASSETS = [
   './',
   './index.html',

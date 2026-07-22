@@ -75,7 +75,7 @@ button{font-family:inherit;cursor:pointer;border:none;color:inherit}
 .ch .cbody b{font-size:15px;display:block}
 .ch .tags{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap}
 .tag{background:#241a45;padding:2px 7px;border-radius:6px;border:1px solid var(--line)}
-.tag.diff-facile{color:var(--green)}.tag.diff-media{color:var(--gold)}.tag.diff-difficile{color:#ff9a62}
+.tag.diff-facile{color:var(--green)}.tag.diff-media{color:var(--gold)}.tag.diff-difficile{color:#ff9a62}.tag.diff-vera{color:#ff4d6d;font-weight:800}
 .btn{background:linear-gradient(160deg,var(--gold),var(--gold2));color:#2a1c00;font-weight:800;
   border-radius:10px;padding:9px 14px;font-size:13px;white-space:nowrap;box-shadow:0 4px 12px rgba(245,196,81,.25)}
 .btn:active{transform:translateY(1px)}
@@ -197,7 +197,7 @@ textarea{resize:vertical;min-height:60px}
 
 /* ---------- BILANCIAMENTO (modifica qui) ---------- */
 const BAL = {
-  xpBase:{ facile:10, media:25, difficile:50 },
+  xpLegacy:{ facile:20, media:50, difficile:100, vera:250 },  // solo migrazione: sfide vecchie salvate col sistema a difficoltà fissa
   speedBonus:0.30,          // +30% se completi una sfida a cronometro entro il target
   quantityBonusMax:0.50,    // fino a +50% superando il target di quantità
   streakStep:0.05,          // +5% XP per giorno di streak sulle giornaliere
@@ -216,6 +216,16 @@ const BAL = {
   },
   diffLabels:[ [0,'Rilassata'],[0.9,'Impegnativa'],[1.6,'Dura'],[2.6,'Brutale'],[4,'Incubo'] ],
 };
+
+/* fasce di difficoltà mostrate mentre trascini lo slider XP di una sfida (20–1000 XP) */
+const XP_TIERS = [
+  {max:200,  label:'Hobby',     ico:'🌱'},
+  {max:400,  label:'Impegnato', ico:'🔥'},
+  {max:600,  label:'Seria',     ico:'⭐'},
+  {max:800,  label:'Dura',      ico:'💀'},
+  {max:1000, label:'Incubo',    ico:'🌋'},
+];
+function xpTierFor(xp){ for(const t of XP_TIERS) if(xp<=t.max) return t; return XP_TIERS[XP_TIERS.length-1]; }
 
 const DEFAULT_STATS = [
   {id:'int', nome:'Intelletto', ico:'🧠', xp:0},
@@ -263,6 +273,7 @@ function levelProgress(xp){
 
 /* ---------- CALENDARIO ---------- */
 function weekStart(d=now()){ const x=new Date(d); const g=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-g); return x; }
+function mondayKey(d=now()){ return dayKey(weekStart(d)); }   // identifica la settimana (lunedì) a cui appartiene una data
 function daysBetween(a,b){ return Math.floor((b-a)/86400000); }
 function xpEarnedSince(ts){ return S.log.filter(l=>l.xp>0 && new Date(l.quando)>=ts).reduce((s,l)=>s+l.xp,0); }
 function xpThisWeek(){ return xpEarnedSince(weekStart()); }
@@ -294,7 +305,7 @@ function touchStreak(){
 function logEntry(o){ S.log.unshift(Object.assign({quando:iso()}, o)); if(S.log.length>400) S.log.pop(); }
 
 /* punteggio di una sfida in base a difficoltà + bonus */
-function baseXp(ch){ return (BAL.xpBase[ch.difficolta]||10); }
+function baseXp(ch){ if(ch.xp) return ch.xp; return BAL.xpLegacy[ch.difficolta] || 100; }
 
 function completeTimed(ch, secs){
   let xp=baseXp(ch), bonusTxt=[];
@@ -341,7 +352,6 @@ function winBoss(b){
   S.player.totalXP+=bonus; S.player.level=levelFromXp(S.player.totalXP);
   logEntry({challengeId:b.id, nome:'👑 Boss sconfitto: '+b.nome, statId:b.statId, xp:bonus, esito:'vinto', boss:true});
   toast(`🐉 ${b.nome} sconfitto!`, `Ricompensa +${bonus} XP`);
-  if(b.autoGoalId) scheduleNextGoalBoss(b);
 }
 function failBoss(b){
   b.bossState='fallito';
@@ -354,27 +364,23 @@ function failBoss(b){
   S.player.level=levelFromXp(S.player.totalXP);
   logEntry({challengeId:b.id, nome:'💀 Sconfitto da: '+b.nome, statId:b.statId, xp:0, esito:'fallito', boss:true});
   toast(`💀 ${b.nome} ti ha sconfitto`, msg,'bad');
-  if(b.autoGoalId) scheduleNextGoalBoss(b);
 }
 function resetCharacter(){
   S.player.totalXP=0; S.player.level=1; S.player.streak=0; S.player.vite=S.player.viteMax;
   S.stats.forEach(s=>s.xp=0);
 }
 
-/* boss automatici settimanali generati dagli obiettivi */
-function scheduleNextGoalBoss(prev){
-  // ne crea uno nuovo per la settimana successiva, stessa quota
-  const g=S.goals.find(x=>x.id===prev.autoGoalId); if(!g) return;
-  if(S.challenges.some(c=>c.tipo==='boss'&&c.bossState==='attivo'&&c.autoGoalId===g.id)) return;
-  createGoalBoss(g);
-}
+/* boss automatici generati dagli obiettivi: uno per settimana di calendario (lunedì → lunedì).
+   Un nuovo nemico parte solo quando inizia una nuova settimana, mai a metà settimana
+   (anche se quello vecchio è già stato sconfitto prima). */
 function createGoalBoss(g){
-  const end=weekStart(); end.setDate(end.getDate()+7); end.setHours(23,59,59);
+  const end=weekStart(); end.setDate(end.getDate()+7);   // scadenza: il prossimo lunedì
   S.challenges.unshift({
-    id:uid(), nome:'Quota settimanale: '+g.nome, statId:g.statId||S.stats[0].id, difficolta:'difficile',
+    id:uid(), nome:'Quota settimanale: '+g.nome, statId:g.statId||S.stats[0].id,
     tipo:'boss', bossState:'attivo', bossXp:0, bossXpSoglia:Math.round(g.quotaSettimanale),
     bossStart:iso(), bossDeadline:iso(end), bossPenalita:g.bossPenalita||'xpRun', autoGoalId:g.id, note:''
   });
+  g.lastBossWeekKey=mondayKey();
 }
 
 /* controllo scadenze all'avvio / cambio giorno */
@@ -386,11 +392,15 @@ function dayChangeCheck(){
   // streak persa se salti un giorno
   const last=S.player.lastActiveDate;
   if(last && daysBetween(new Date(last), now())>1) S.player.streak=0;
-  // assicura boss automatici per gli obiettivi con autoBoss
+  checkBosses();   // risolve prima i nemici la cui settimana è scaduta (vinti/falliti)
+  // ogni lunedì (nuova settimana di calendario) fa partire il boss per gli obiettivi con boss automatico —
+  // mai a metà settimana, anche se quello di questa settimana è già stato sconfitto prima
+  const wk=mondayKey();
   S.goals.filter(g=>g.autoBoss).forEach(g=>{
-    if(!S.challenges.some(c=>c.tipo==='boss'&&c.bossState==='attivo'&&c.autoGoalId===g.id)) createGoalBoss(g);
+    if(S.challenges.some(c=>c.tipo==='boss'&&c.bossState==='attivo'&&c.autoGoalId===g.id)) return;
+    if(g.lastBossWeekKey===wk) return;
+    createGoalBoss(g);
   });
-  checkBosses();
 }
 
 /* ============================================================
@@ -502,7 +512,7 @@ function renderChallenges(v){
           <b>${esc(ch.nome)}</b>
           <div class="tags">
             <span class="tag">${statName(ch.statId)}</span>
-            <span class="tag diff-${ch.difficolta}">${ch.difficolta}</span>
+            <span class="tag">${xpTierFor(baseXp(ch)).ico} ${xpTierFor(baseXp(ch)).label} · ${baseXp(ch)} XP</span>
             ${ch.tipo==='giornaliera'?`<span class="tag">🔥 ${ch.streak||0}</span>`:''}
             ${ch.target?`<span class="tag">🎯 ${ch.target}${ch.tipo==='cronometro'?' min':''}</span>`:''}
           </div>
@@ -536,7 +546,10 @@ function renderBosses(v){
   $('#newBoss',head).onclick=()=>openBossModal();
 
   const bosses=S.challenges.filter(c=>c.tipo==='boss');
-  if(!bosses.length){ v.appendChild(el(`<div class="empty"><span class="e-ico">🐉</span>Nessun nemico all'orizzonte.<br>Evocane uno per alzare la posta.</div>`)); return; }
+  const nextMonday=weekStart(); nextMonday.setDate(nextMonday.getDate()+7);
+  const waitingGoals=S.goals.filter(g=>g.autoBoss
+    && !S.challenges.some(c=>c.tipo==='boss'&&c.bossState==='attivo'&&c.autoGoalId===g.id));
+  if(!bosses.length && !waitingGoals.length){ v.appendChild(el(`<div class="empty"><span class="e-ico">🐉</span>Nessun nemico all'orizzonte.<br>Evocane uno per alzare la posta.</div>`)); return; }
 
   bosses.sort((a,b)=> (a.bossState==='attivo'?0:1)-(b.bossState==='attivo'?0:1));
   bosses.forEach(b=>{
@@ -561,6 +574,11 @@ function renderBosses(v){
       </div>`);
     const del=box.querySelector('.del'); if(del) del.onclick=()=>{ if(confirm('Ritirare questo nemico?')){ S.challenges=S.challenges.filter(x=>x.id!==b.id); save(); render(); } };
     v.appendChild(box);
+  });
+  waitingGoals.forEach(g=>{
+    const ms=nextMonday-now();
+    v.appendChild(el(`<div class="boss dead"><div class="b-top"><h3>💤 Prossimo nemico: ${esc(g.nome)}</h3></div>
+      <div class="countdown"><span>Parte lunedì · tra ${fmtLeft(ms)}</span><span></span></div></div>`));
   });
   startTick();
 }
@@ -672,7 +690,7 @@ function sheet(html){
 
 let chDraft=null;
 function openChallengeModal(ch){
-  chDraft = ch ? Object.assign({},ch) : {id:null,nome:'',statId:S.stats[0].id,difficolta:'media',tipo:'cronometro',target:'',note:''};
+  chDraft = ch ? Object.assign({},ch,{xp: ch.xp||baseXp(ch)}) : {id:null,nome:'',statId:S.stats[0].id,xp:100,tipo:'cronometro',target:'',note:''};
   const o=sheet(`
     <h2>${ch?'Modifica sfida':'Nuova sfida'}</h2>
     <label>Nome</label>
@@ -685,10 +703,9 @@ function openChallengeModal(ch){
     </div>
     <label>Statistica allenata</label>
     <select id="f_stat">${S.stats.map(s=>`<option value="${s.id}" ${s.id===chDraft.statId?'selected':''}>${esc(s.nome)}</option>`).join('')}</select>
-    <label>Difficoltà</label>
-    <div class="seg" id="f_diff">
-      <button data-v="facile">Facile</button><button data-v="media">Media</button><button data-v="difficile">Difficile</button>
-    </div>
+    <label>Difficoltà — <span id="f_xpLabel"></span></label>
+    <input type="range" id="f_xp" min="20" max="1000" step="10" value="${chDraft.xp}"/>
+    <div class="hint">Trascina per scegliere quanto vale questa sfida: da un impegno leggero (Hobby) a una prova estrema (Incubo).</div>
     <label id="f_targetLbl">Obiettivo (minuti)</label>
     <input id="f_target" type="number" min="0" placeholder="opzionale" value="${chDraft.target||''}"/>
     <div class="hint" id="f_targetHint"></div>
@@ -700,7 +717,9 @@ function openChallengeModal(ch){
       <button class="btn ghost" id="f_cancel">Annulla</button>
     </div>`);
   const setSeg=(wrap,val)=>wrap.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===val));
-  setSeg($('#f_tipo',o),chDraft.tipo); setSeg($('#f_diff',o),chDraft.difficolta);
+  setSeg($('#f_tipo',o),chDraft.tipo);
+  const syncXpLabel=()=>{ const xp=+$('#f_xp',o).value; const t=xpTierFor(xp); $('#f_xpLabel',o).textContent=`${t.ico} ${t.label} · ${xp} XP`; };
+  syncXpLabel(); $('#f_xp',o).oninput=syncXpLabel;
   const syncTarget=()=>{
     const t=chDraft.tipo;
     $('#f_targetLbl',o).textContent = t==='cronometro'?'Obiettivo tempo (minuti)': t==='obiettivo'?'Obiettivo quantità':'Obiettivo (facoltativo)';
@@ -708,12 +727,11 @@ function openChallengeModal(ch){
   };
   syncTarget();
   $('#f_tipo',o).querySelectorAll('button').forEach(b=>b.onclick=()=>{ chDraft.tipo=b.dataset.v; setSeg($('#f_tipo',o),b.dataset.v); syncTarget(); });
-  $('#f_diff',o).querySelectorAll('button').forEach(b=>b.onclick=()=>{ chDraft.difficolta=b.dataset.v; setSeg($('#f_diff',o),b.dataset.v); });
   $('#f_cancel',o).onclick=closeModal;
   if(ch) $('#f_del',o).onclick=()=>{ S.challenges=S.challenges.filter(x=>x.id!==ch.id); save(); closeModal(); render(); };
   $('#f_save',o).onclick=()=>{
     const nome=$('#f_nome',o).value.trim(); if(!nome){ $('#f_nome',o).focus(); return; }
-    const obj={ nome, statId:$('#f_stat',o).value, difficolta:chDraft.difficolta, tipo:chDraft.tipo,
+    const obj={ nome, statId:$('#f_stat',o).value, xp: parseInt($('#f_xp',o).value)||100, tipo:chDraft.tipo,
       target: parseFloat($('#f_target',o).value)||0, note:$('#f_note',o).value.trim() };
     if(ch){ Object.assign(ch,obj); }
     else { S.challenges.unshift(Object.assign({id:uid(),streak:0,lastDone:null},obj)); }
