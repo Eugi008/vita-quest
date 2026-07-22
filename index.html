@@ -681,6 +681,21 @@ function renderSettings(v){
   $('#hardcore',opt).onchange=(e)=>{ p.hardcore=e.target.checked; save(); };
   v.appendChild(opt);
 
+  // Forza aggiornamento (risolve il problema "vedo ancora la versione vecchia" dopo un aggiornamento)
+  const up=el(`<div class="card"><h2>🔄 Aggiornamenti app</h2>
+    <p class="hint">Se dopo un aggiornamento vedi ancora la versione vecchia dell'app, premi qui. I tuoi progressi (livello, XP, sfide) NON vengono toccati — viene ripulita solo la copia offline del codice.</p>
+    <button class="btn ghost full" id="forceUpdate" style="margin-top:10px">🔄 Forza aggiornamento</button>
+  </div>`);
+  $('#forceUpdate',up).onclick=async ()=>{
+    const btn=$('#forceUpdate',up); btn.textContent='Aggiornamento in corso…'; btn.disabled=true;
+    try{
+      if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); for(const r of regs) await r.unregister(); }
+      if('caches' in window){ const keys=await caches.keys(); for(const k of keys) await caches.delete(k); }
+    }catch(e){}
+    location.reload();
+  };
+  v.appendChild(up);
+
   // Backup
   const bk=el(`<div class="card"><h2>💾 Backup & Dati</h2>
     <p class="hint">I dati restano su questo dispositivo. Esporta per spostarli su un altro (es. dal PC al telefono).</p>
