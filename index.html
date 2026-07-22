@@ -275,8 +275,13 @@ function levelProgress(xp){
 function weekStart(d=now()){ const x=new Date(d); const g=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-g); return x; }
 function mondayKey(d=now()){ return dayKey(weekStart(d)); }   // identifica la settimana (lunedì) a cui appartiene una data
 function daysBetween(a,b){ return Math.floor((b-a)/86400000); }
-function xpEarnedSince(ts){ return S.log.filter(l=>l.xp>0 && new Date(l.quando)>=ts).reduce((s,l)=>s+l.xp,0); }
-function xpThisWeek(){ return xpEarnedSince(weekStart()); }
+/* una sfida senza bersaglio esplicito ('all', legacy) conta per tutti gli obiettivi;
+   altrimenti solo per l'obiettivo scelto (o per nessuno con 'none'). */
+function matchesGoalTarget(t, goalId){ if(!t||t==='all') return true; if(t==='none') return false; return t===goalId; }
+function xpThisWeekForGoal(goalId){
+  const ws=weekStart();
+  return S.log.filter(l=>l.xp>0 && new Date(l.quando)>=ws && matchesGoalTarget(l.goalTarget, goalId)).reduce((s,l)=>s+l.xp,0);
+}
 
 /* ============================================================
    ASSEGNAZIONE XP / COMPLETAMENTI
@@ -311,7 +316,7 @@ function completeTimed(ch, secs){
   let xp=baseXp(ch), bonusTxt=[];
   if(ch.target>0 && secs<=ch.target*60){ xp*=1+BAL.speedBonus; bonusTxt.push(`velocità +${BAL.speedBonus*100}%`); }
   touchStreak(); grantXp(xp, ch.statId, ch);
-  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), tempoSec:secs});
+  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), tempoSec:secs, goalTarget:ch.goalTarget||'all'});
   save(); toast(`⚔️ +${Math.round(xp)} XP`, ch.nome + (bonusTxt.length?` · ${bonusTxt.join(', ')}`:''));
 }
 
@@ -319,7 +324,7 @@ function completeQuantity(ch, qty){
   let xp=baseXp(ch), bt='';
   if(ch.target>0){ const ratio=qty/ch.target; const bonus=Math.min(BAL.quantityBonusMax, Math.max(0,ratio-1)); if(bonus>0){ xp*=1+bonus; bt=` · quantità +${Math.round(bonus*100)}%`; } }
   touchStreak(); grantXp(xp, ch.statId, ch);
-  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), quantita:qty});
+  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), quantita:qty, goalTarget:ch.goalTarget||'all'});
   save(); toast(`⚔️ +${Math.round(xp)} XP`, ch.nome+bt);
 }
 
@@ -331,7 +336,7 @@ function completeDaily(ch){
   let xp=baseXp(ch); const sb=Math.min(BAL.streakCap, (ch.streak-1)*BAL.streakStep);
   xp*=1+sb;
   touchStreak(); grantXp(xp, ch.statId, ch);
-  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp)});
+  logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), goalTarget:ch.goalTarget||'all'});
   save(); toast(`🔥 +${Math.round(xp)} XP · streak ${ch.streak}`, ch.nome + (sb>0?` · bonus +${Math.round(sb*100)}%`:''));
 }
 
@@ -339,6 +344,14 @@ function completeDaily(ch){
    BOSS / NEMICI
    ============================================================ */
 function activeBosses(){ return S.challenges.filter(c=>c.tipo==='boss' && c.bossState==='attivo'); }
+
+/* etichetta leggibile del grande obiettivo bersaglio scelto per una sfida */
+function goalTargetLabel(ch){
+  const t=ch.goalTarget;
+  if(!t || t==='all') return '🎯 Tutti gli obiettivi';
+  if(t==='none') return '🚫 Nessun obiettivo';
+  const g=S.goals.find(x=>x.id===t); return '🎯 '+(g?g.nome:'obiettivo rimosso');
+}
 
 /* etichetta leggibile del nemico bersaglio scelto per una sfida */
 function bossTargetLabel(ch){
@@ -476,7 +489,7 @@ function renderHero(v){
   const gc=el(`<div class="card"><h2>🎯 Grandi Obiettivi</h2></div>`);
   if(!S.goals.length){ gc.appendChild(el(`<div class="empty"><span class="e-ico">🗺️</span>Nessun obiettivo. Aggiungilo dal Setup per calibrare le sfide.</div>`)); }
   S.goals.forEach(g=>{
-    const earned=xpThisWeek(), pct=Math.min(1, earned/Math.max(1,g.quotaSettimanale));
+    const earned=xpThisWeekForGoal(g.id), pct=Math.min(1, earned/Math.max(1,g.quotaSettimanale));
     const dl = g.deadline? new Date(g.deadline).toLocaleDateString('it-IT'):'—';
     gc.appendChild(el(`
       <div class="goal">
@@ -532,6 +545,7 @@ function renderChallenges(v){
             <span class="tag">${statName(ch.statId)}</span>
             <span class="tag">${xpTierFor(baseXp(ch)).ico} ${xpTierFor(baseXp(ch)).label} · ${baseXp(ch)} XP</span>
             ${ch.bossTarget && ch.bossTarget!=='all' ? `<span class="tag">${bossTargetLabel(ch)}</span>` : ''}
+            ${ch.goalTarget && ch.goalTarget!=='all' ? `<span class="tag">${goalTargetLabel(ch)}</span>` : ''}
             ${ch.tipo==='giornaliera'?`<span class="tag">🔥 ${ch.streak||0}</span>`:''}
             ${ch.target?`<span class="tag">🎯 ${ch.target}${ch.tipo==='cronometro'?' min':''}</span>`:''}
           </div>
@@ -724,7 +738,7 @@ function sheet(html){
 
 let chDraft=null;
 function openChallengeModal(ch){
-  chDraft = ch ? Object.assign({},ch,{xp: ch.xp||baseXp(ch), bossTarget: ch.bossTarget||'all'}) : {id:null,nome:'',statId:S.stats[0].id,xp:100,tipo:'cronometro',target:'',note:'',bossTarget:'all'};
+  chDraft = ch ? Object.assign({},ch,{xp: ch.xp||baseXp(ch), bossTarget: ch.bossTarget||'all', goalTarget: ch.goalTarget||'all'}) : {id:null,nome:'',statId:S.stats[0].id,xp:100,tipo:'cronometro',target:'',note:'',bossTarget:'all',goalTarget:'all'};
   const o=sheet(`
     <h2>${ch?'Modifica sfida':'Nuova sfida'}</h2>
     <label>Nome</label>
@@ -751,6 +765,13 @@ function openChallengeModal(ch){
       ${S.challenges.filter(c=>c.tipo==='boss'&&c.bossState==='attivo'&&!c.autoGoalId).map(b=>`<option value="boss:${b.id}">🐉 ${esc(b.nome)}</option>`).join('')}
     </select>
     <div class="hint">Gli XP di questa sfida faranno danno solo al nemico scelto (o a nessuno).</div>
+    <label>Grande Obiettivo bersaglio</label>
+    <select id="f_goal">
+      <option value="all">🎯 Tutti gli obiettivi</option>
+      <option value="none">🚫 Nessuno</option>
+      ${S.goals.map(g=>`<option value="${g.id}">🎯 ${esc(g.nome)}</option>`).join('')}
+    </select>
+    <div class="hint">Gli XP di questa sfida conteranno solo per la quota settimanale dell'obiettivo scelto (o di nessuno).</div>
     <label>Note</label>
     <textarea id="f_note" placeholder="Dettagli...">${esc(chDraft.note||'')}</textarea>
     <div class="row-btns" style="margin-top:18px">
@@ -761,6 +782,7 @@ function openChallengeModal(ch){
   const setSeg=(wrap,val)=>wrap.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===val));
   setSeg($('#f_tipo',o),chDraft.tipo);
   if([...$('#f_boss',o).options].some(op=>op.value===chDraft.bossTarget)) $('#f_boss',o).value=chDraft.bossTarget;
+  if([...$('#f_goal',o).options].some(op=>op.value===chDraft.goalTarget)) $('#f_goal',o).value=chDraft.goalTarget;
   const syncXpLabel=()=>{ const xp=+$('#f_xp',o).value; const t=xpTierFor(xp); $('#f_xpLabel',o).textContent=`${t.ico} ${t.label} · ${xp} XP`; };
   syncXpLabel(); $('#f_xp',o).oninput=syncXpLabel;
   const syncTarget=()=>{
@@ -775,7 +797,7 @@ function openChallengeModal(ch){
   $('#f_save',o).onclick=()=>{
     const nome=$('#f_nome',o).value.trim(); if(!nome){ $('#f_nome',o).focus(); return; }
     const obj={ nome, statId:$('#f_stat',o).value, xp: parseInt($('#f_xp',o).value)||100, tipo:chDraft.tipo,
-      target: parseFloat($('#f_target',o).value)||0, note:$('#f_note',o).value.trim(), bossTarget:$('#f_boss',o).value };
+      target: parseFloat($('#f_target',o).value)||0, note:$('#f_note',o).value.trim(), bossTarget:$('#f_boss',o).value, goalTarget:$('#f_goal',o).value };
     if(ch){ Object.assign(ch,obj); }
     else { S.challenges.unshift(Object.assign({id:uid(),streak:0,lastDone:null},obj)); }
     save(); closeModal(); render();
