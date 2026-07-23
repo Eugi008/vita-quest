@@ -317,6 +317,7 @@ function completeTimed(ch, secs){
   if(ch.target>0 && secs<=ch.target*60){ xp*=1+BAL.speedBonus; bonusTxt.push(`velocità +${BAL.speedBonus*100}%`); }
   touchStreak(); grantXp(xp, ch.statId, ch);
   logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), tempoSec:secs, goalTarget:ch.goalTarget||'all'});
+  S.challenges=S.challenges.filter(c=>c.id!==ch.id);   // sfida a cronometro: una tantum, sparisce una volta completata
   save(); toast(`⚔️ +${Math.round(xp)} XP`, ch.nome + (bonusTxt.length?` · ${bonusTxt.join(', ')}`:''));
 }
 
@@ -325,6 +326,7 @@ function completeQuantity(ch, qty){
   if(ch.target>0){ const ratio=qty/ch.target; const bonus=Math.min(BAL.quantityBonusMax, Math.max(0,ratio-1)); if(bonus>0){ xp*=1+bonus; bt=` · quantità +${Math.round(bonus*100)}%`; } }
   touchStreak(); grantXp(xp, ch.statId, ch);
   logEntry({challengeId:ch.id, nome:ch.nome, statId:ch.statId, xp:Math.round(xp), quantita:qty, goalTarget:ch.goalTarget||'all'});
+  S.challenges=S.challenges.filter(c=>c.id!==ch.id);   // sfida a obiettivo: una tantum, sparisce una volta completata
   save(); toast(`⚔️ +${Math.round(xp)} XP`, ch.nome+bt);
 }
 
@@ -383,6 +385,7 @@ function winBoss(b){
   S.player.totalXP+=bonus; S.player.level=levelFromXp(S.player.totalXP);
   logEntry({challengeId:b.id, nome:'👑 Boss sconfitto: '+b.nome, statId:b.statId, xp:bonus, esito:'vinto', boss:true});
   toast(`🐉 ${b.nome} sconfitto!`, `Ricompensa +${bonus} XP`);
+  S.challenges=S.challenges.filter(c=>c.id!==b.id);   // il nemico sconfitto sparisce, non resta lì "completato"
 }
 function failBoss(b){
   b.bossState='fallito';
@@ -395,6 +398,7 @@ function failBoss(b){
   S.player.level=levelFromXp(S.player.totalXP);
   logEntry({challengeId:b.id, nome:'💀 Sconfitto da: '+b.nome, statId:b.statId, xp:0, esito:'fallito', boss:true});
   toast(`💀 ${b.nome} ti ha sconfitto`, msg,'bad');
+  S.challenges=S.challenges.filter(c=>c.id!==b.id);   // nemico risolto: sparisce dalla lista, non resta lì
 }
 function resetCharacter(){
   S.player.totalXP=0; S.player.level=1; S.player.streak=0; S.player.vite=S.player.viteMax;
