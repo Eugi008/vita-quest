@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#eaf7f0" />
+<meta name="description" content="Forma Quest: trasforma il movimento e il mangiar sano in un gioco. Il tuo avatar dimagrisce insieme a te." />
+<title>Forma Quest</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="mobile-web-app-capable" content="yes" />
+<style>
+:root{
+  --bg1:#eaf7f0; --bg2:#fdf7ec; --card:#ffffff; --card2:#f6fbf8;
+  --ink:#1e3a32; --ink2:#4a6b60; --muted:#7d968c; --line:#dbeae2;
+  --green:#2f9e6f; --green2:#1f7d55; --mint:#8fe3c0;
+  --orange:#f2913d; --orange2:#d97420;
+  --red:#e2574c; --blue:#3d8fd6; --violet:#8b6ad6; --gold:#f0b93b;
+  --shadow:0 6px 22px rgba(31,90,70,.10); --shadow-lg:0 14px 40px rgba(31,90,70,.18);
+  --r:20px; --r2:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;overscroll-behavior:none}
+body{
+  font-family:"Nunito","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:17px; line-height:1.45; color:var(--ink);
+  background:
+    radial-gradient(900px 500px at 15% -5%, #d7f2e5 0%, transparent 60%),
+    radial-gradient(800px 500px at 95% 10%, #fdeccd 0%, transparent 55%),
+    linear-gradient(180deg,var(--bg1),var(--bg2)) fixed;
+  min-height:100dvh;
+}
+.app{max-width:600px;margin:0 auto;padding:14px 14px calc(96px + var(--safe-b))}
+h1,h2,h3,h4{margin:0;line-height:1.2}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;color:inherit;background:none}
+input,select{font-family:inherit;font-size:17px}
+.hidden{display:none!important}
+.center{text-align:center}
+
+/* ---------- Topbar ---------- */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.logo{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:22px;
+  background:linear-gradient(150deg,var(--mint),var(--green));box-shadow:var(--shadow)}
+.brand{flex:1;min-width:0}
+.brand b{display:block;font-size:19px;font-weight:800;letter-spacing:.2px}
+.brand small{display:block;font-size:11px;color:var(--muted);letter-spacing:1.6px;text-transform:uppercase}
+.iconbtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;
+  background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.iconbtn.off{opacity:.42}
+
+/* ---------- Cards ---------- */
+.card.sticky{position:sticky;top:-2px;z-index:8;box-shadow:0 10px 24px rgba(31,90,70,.14)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.card>h2{font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--green2);
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;font-weight:800}
+.card>h2 .sp{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--muted);font-weight:700;font-size:12px}
+.sub{font-size:13px;color:var(--muted);margin-top:-6px;margin-bottom:12px}
+
+/* ---------- Hero / avatar ---------- */
+.hero{position:relative;overflow:hidden;padding:12px 16px 16px;
+  background:linear-gradient(180deg,#ffffff,#f2fbf6)}
+.hero-sky{position:absolute;inset:0;pointer-events:none;opacity:.5}
+.stage{position:relative;display:grid;place-items:center;padding:4px 0 0}
+.weightTag{position:relative;z-index:3;display:inline-flex;align-items:baseline;gap:6px;
+  background:linear-gradient(150deg,#fff,#eefaf3);border:2px solid var(--green);border-radius:999px;
+  padding:5px 16px;box-shadow:var(--shadow);font-weight:900;font-size:26px;color:var(--green2);
+  font-variant-numeric:tabular-nums;transition:transform .25s}
+.weightTag i{font-style:normal;font-size:14px;color:var(--ink2);font-weight:800}
+.weightTag.bump{transform:scale(1.14)}
+.weightTag.up{border-color:var(--orange);color:var(--orange2)}
+.avatarName{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+#avatarWrap{position:relative;width:230px;height:280px;touch-action:none}
+#avatarSvg{width:100%;height:100%;display:block;overflow:visible}
+#avatarWrap.dropready #shadowRing{opacity:1;transform:scale(1)}
+#shadowRing{position:absolute;inset:6% 4% 4%;border:3px dashed var(--green);border-radius:50%;
+  opacity:0;transform:scale(.8);transition:.2s;pointer-events:none;background:rgba(143,227,192,.18)}
+.moodMsg{min-height:22px;font-size:14px;color:var(--ink2);font-weight:700;text-align:center;margin-top:2px;padding:0 8px}
+
+/* ---------- Bars ---------- */
+.bar{height:14px;border-radius:9px;background:#e8f2ed;overflow:hidden;border:1px solid var(--line)}
+.bar>span{display:block;height:100%;border-radius:9px;transition:width .7s cubic-bezier(.2,.8,.3,1)}
+.bar.goal>span{background:linear-gradient(90deg,var(--mint),var(--green))}
+.bar.xp>span{background:linear-gradient(90deg,#7fc4f5,var(--blue))}
+.barlab{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin:12px 0 5px;font-weight:700}
+.barlab b{color:var(--ink)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800;color:var(--ink2);display:inline-flex;gap:6px;align-items:center}
+.chip b{color:var(--green2)}
+.chip.fire b{color:var(--orange2)}
+
+/* ---------- Buttons ---------- */
+.btn{background:linear-gradient(150deg,var(--green),var(--green2));color:#fff;font-weight:800;
+  border-radius:14px;padding:12px 18px;font-size:16px;box-shadow:0 5px 14px rgba(47,158,111,.28);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s}
+.btn:active{transform:translateY(2px) scale(.99)}
+.btn.full{width:100%}
+.btn.ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line);box-shadow:none;font-weight:700}
+.btn.orange{background:linear-gradient(150deg,var(--orange),var(--orange2));box-shadow:0 5px 14px rgba(242,145,61,.28)}
+.btn.red{background:linear-gradient(150deg,#ef6a5f,var(--red));box-shadow:none}
+.btn.sm{padding:8px 13px;font-size:14px;border-radius:11px}
+.btn.big{padding:16px 20px;font-size:18px;border-radius:16px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btnrow>*{flex:1;min-width:130px}
+
+/* ---------- Daily challenges ---------- */
+.q{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:var(--r2);
+  padding:11px 12px;margin-bottom:9px;background:var(--card2);transition:.25s}
+.q .qi{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px;
+  background:#fff;border:1px solid var(--line);flex:0 0 auto}
+.q .qb{flex:1;min-width:0}
+.q .qb b{display:block;font-size:15.5px;font-weight:800}
+.q .qb span{font-size:12.5px;color:var(--muted);font-weight:700}
+.q.done{opacity:.62;background:#eefaf3;border-color:#bfe8d3}
+.q.done .qb b{text-decoration:line-through}
+.tick{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;
+  font-size:19px;color:transparent;flex:0 0 auto;background:#fff;transition:.2s}
+.q.done .tick{background:var(--green);border-color:var(--green);color:#fff}
+
+/* ---------- Food ---------- */
+.foodgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:9px}
+.food{background:var(--card2);border:1.5px solid var(--line);border-radius:16px;padding:9px 4px 7px;
+  text-align:center;touch-action:none;user-select:none;transition:transform .12s,box-shadow .12s;position:relative}
+.food:active{transform:scale(.94)}
+.food .fe{font-size:31px;display:block;line-height:1.1;pointer-events:none}
+.food .fn{font-size:11px;font-weight:800;color:var(--ink2);display:block;margin-top:2px;pointer-events:none}
+.food.bad{background:#fff6ef;border-color:#f7ddc4}
+.food.drag{opacity:.3}
+.ghost-food{position:fixed;z-index:400;font-size:52px;pointer-events:none;transform:translate(-50%,-50%) scale(1.25);
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.25));transition:opacity .2s}
+.trash{margin-top:12px;border:2.5px dashed #f0c9a6;border-radius:var(--r2);padding:14px;text-align:center;
+  color:var(--orange2);font-weight:800;font-size:14.5px;background:#fff8f1;transition:.2s}
+.trash.ready{background:#ffe9d6;border-color:var(--orange);transform:scale(1.03)}
+.legend{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.6}
+
+/* ---------- Exercises ---------- */
+.ex{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:var(--r2);
+  padding:11px 12px;margin-bottom:9px;background:var(--card2)}
+.ex .xi{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:24px;background:#fff;border:1px solid var(--line);flex:0 0 auto}
+.ex .xb{flex:1;min-width:0}
+.ex .xb b{display:block;font-size:16px;font-weight:800}
+.ex .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px}
+.tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:7px;background:#fff;border:1px solid var(--line);color:var(--muted)}
+.tag.d1{color:var(--green2);border-color:#bfe8d3;background:#eefaf3}
+.tag.d2{color:var(--orange2);border-color:#f7ddc4;background:#fff6ef}
+.tag.d3{color:var(--red);border-color:#f6cfcb;background:#fdeeed}
+.tag.kg{color:var(--violet);border-color:#ded3f7;background:#f5f1ff}
+
+/* ---------- Workout overlay ---------- */
+#workout{position:fixed;inset:0;z-index:300;background:linear-gradient(180deg,#effaf5,#fdf6ea);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+#workout h2{font-size:26px;font-weight:900}
+#workout .wsub{color:var(--ink2);font-weight:700;font-size:15px;margin-top:4px}
+.ring{position:relative;width:250px;height:250px;margin:8px 0}
+.ring>svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring .rtxt{position:absolute;inset:0;display:grid;place-items:center;flex-direction:column}
+.bignum{font-size:78px;font-weight:900;color:var(--green2);font-variant-numeric:tabular-nums;line-height:1}
+.bignum.small{font-size:52px}
+.wcue{font-size:22px;font-weight:900;color:var(--orange2);min-height:30px;letter-spacing:2px;text-transform:uppercase}
+#wAvatar{width:170px;height:200px}
+.pulse{animation:pulse .5s ease}
+@keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.16)}100%{transform:scale(1)}}
+
+/* ---------- Charts / analytics ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.tile{background:var(--card2);border:1px solid var(--line);border-radius:var(--r2);padding:11px 9px;text-align:center}
+.tile b{display:block;font-size:22px;font-weight:900;color:var(--green2);font-variant-numeric:tabular-nums}
+.tile span{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-top:2px;line-height:1.25}
+.tile.o b{color:var(--orange2)} .tile.v b{color:var(--violet)} .tile.b b{color:var(--blue)}
+.chart{width:100%;height:170px;display:block;overflow:visible}
+.medals{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px}
+.medal{text-align:center;padding:10px 5px;border-radius:var(--r2);border:1px solid var(--line);background:var(--card2);opacity:.38;filter:grayscale(1)}
+.medal.on{opacity:1;filter:none;border-color:var(--gold);background:#fffaeb;box-shadow:0 3px 10px rgba(240,185,59,.2)}
+.medal .me{font-size:28px;display:block}
+.medal .mn{font-size:10.5px;font-weight:800;color:var(--ink2);display:block;margin-top:3px;line-height:1.2}
+
+/* ---------- Fact cards ---------- */
+.fact{border-radius:var(--r2);padding:14px 15px;background:linear-gradient(150deg,#f4f0ff,#fbf9ff);
+  border:1px solid #e2d9f7;margin-bottom:10px}
+.fact .fcat{font-size:10.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--violet)}
+.fact h4{font-size:16px;margin:3px 0 5px}
+.fact p{margin:0;font-size:14.5px;color:var(--ink2);line-height:1.55}
+
+/* ---------- Diary ---------- */
+.log{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.log:last-child{border-bottom:none}
+.log .le{font-size:20px;flex:0 0 auto;width:26px;text-align:center}
+.log .lb{flex:1;min-width:0}
+.log .lb time{display:block;font-size:11px;color:var(--muted);font-weight:700}
+.log .lk{font-weight:900;font-variant-numeric:tabular-nums;font-size:13px;color:var(--green2);flex:0 0 auto}
+.log .lk.up{color:var(--orange2)}
+
+/* ---------- Nav ---------- */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.93);
+  backdrop-filter:blur(12px);border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
+.nav-in{display:flex;max-width:600px;margin:0 auto}
+.nav button{flex:1;padding:8px 2px 9px;font-size:10.5px;font-weight:800;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.nav button .ni{font-size:22px;transition:transform .2s}
+.nav button.on{color:var(--green2)}
+.nav button.on .ni{transform:translateY(-3px) scale(1.12)}
+.dot{position:absolute;top:5px;right:calc(50% - 17px);width:9px;height:9px;border-radius:50%;background:var(--orange);border:2px solid #fff}
+
+/* ---------- Modal / sheet ---------- */
+.scrim{position:fixed;inset:0;z-index:200;background:rgba(20,50,42,.42);backdrop-filter:blur(3px);
+  display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--card);width:100%;max-width:600px;border-radius:24px 24px 0 0;padding:20px 18px calc(24px + var(--safe-b));
+  box-shadow:var(--shadow-lg);animation:up .28s cubic-bezier(.2,.9,.3,1);max-height:88dvh;overflow:auto}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet h3{font-size:21px;margin-bottom:6px}
+.sheet p{color:var(--ink2);font-size:15px;margin:0 0 14px}
+.grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.field input,.field select{width:100%;padding:12px 14px;border-radius:13px;border:1.5px solid var(--line);background:var(--card2);color:var(--ink);font-weight:700}
+.field input:focus,.field select:focus{outline:none;border-color:var(--green)}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+
+/* ---------- Toast + FX ---------- */
+#toasts{position:fixed;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));z-index:500;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 14px}
+.toast{background:rgba(30,58,50,.95);color:#fff;padding:11px 17px;border-radius:14px;font-weight:800;font-size:14.5px;
+  box-shadow:var(--shadow-lg);animation:tin .3s cubic-bezier(.2,.9,.3,1);max-width:100%;text-align:center}
+.toast small{display:block;font-weight:600;opacity:.82;font-size:12.5px;margin-top:1px}
+.toast.ok{background:rgba(31,125,85,.96)} .toast.warn{background:rgba(217,116,32,.96)} .toast.bad{background:rgba(200,60,50,.96)}
+@keyframes tin{from{transform:translateY(-22px);opacity:0}to{transform:translateY(0);opacity:1}}
+#fxCanvas{position:fixed;inset:0;z-index:450;pointer-events:none}
+.floaty{position:fixed;z-index:460;font-weight:900;font-size:24px;pointer-events:none;
+  text-shadow:0 2px 6px rgba(255,255,255,.9);animation:floatUp 1.25s ease-out forwards}
+@keyframes floatUp{0%{transform:translate(-50%,0) scale(.7);opacity:0}
+  22%{transform:translate(-50%,-16px) scale(1.15);opacity:1}
+  100%{transform:translate(-50%,-92px) scale(1);opacity:0}}
+.shake{animation:shk .5s}
+@keyframes shk{0%,100%{transform:translateX(0)}18%{transform:translateX(-9px)}38%{transform:translateX(8px)}58%{transform:translateX(-6px)}78%{transform:translateX(4px)}}
+
+/* ---------- Onboarding ---------- */
+#intro{position:fixed;inset:0;z-index:250;background:linear-gradient(180deg,#eaf7f0,#fdf7ec);overflow:auto}
+.introbox{max-width:520px;margin:0 auto;padding:26px 20px calc(30px + var(--safe-b));min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
+.introbox h1{font-size:30px;margin-bottom:8px}
+.introbox p{color:var(--ink2);font-size:16px;margin:0 0 18px}
+.steps{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+.steps i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.steps i.on{background:var(--green);width:22px;border-radius:6px}
+@media (max-width:360px){ body{font-size:16px} .bignum{font-size:64px} .ring{width:210px;height:210px} }
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div id="intro" class="hidden"><div class="introbox" id="introBody"></div></div>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="logo">🍏</div>
+    <div class="brand"><b>Forma Quest</b><small>la tua avventura leggera</small></div>
+    <button class="iconbtn" id="btnMusic" title="Musica">🎵</button>
+    <button class="iconbtn" id="btnSfx" title="Effetti sonori">🔊</button>
+  </div>
+
+  <div id="view"></div>
+</div>
+
+<nav class="nav"><div class="nav-in" id="nav">
+  <button data-tab="casa" class="on"><span class="ni">🧍</span>Avatar</button>
+  <button data-tab="cibo"><span class="ni">🍎</span>Cibo</button>
+  <button data-tab="muovi"><span class="ni">💪</span>Muovi</button>
+  <button data-tab="analisi"><span class="ni">📊</span>Analisi</button>
+  <button data-tab="setup"><span class="ni">⚙️</span>Setup</button>
+</div></nav>
+
+<div id="workout" class="hidden"></div>
+<div id="modal"></div>
+<div id="toasts"></div>
+<canvas id="fxCanvas"></canvas>
+
+<script>
+"use strict";
+/* =========================================================================
+   FORMA QUEST — app PWA offline, tutti i dati restano sul dispositivo
+   Salvataggio: localStorage["formaQuestSave"]  (nessun server, nessun account)
+   ========================================================================= */
+
+const SAVE_KEY = 'formaQuestSave';
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const r1=(n)=>Math.round(n*10)/10;
+const r2=(n)=>Math.round(n*100)/100;
+const now=()=>new Date();
+const dayKey=(d=now())=>{const x=new Date(d);x.setHours(0,0,0,0);
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+const daysBetweenKeys=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+const fmtDate=(k)=>{const d=new Date(k+'T00:00:00');
+  return d.toLocaleDateString('it-IT',{day:'numeric',month:'short'});};
+
+/* =========================================================================
+   1. BILANCIAMENTO
+   ========================================================================= */
+const BAL = {
+  pesoStart: 100,        // peso di partenza dell'avatar (non del papà!)
+  obiettivoDefault: 78,
+  malusDopoGiorni: 2,    // giorni di inattività tollerati
+  malusKgGiorno: 0.2,    // kg guadagnati per ogni giorno extra di inattività
+  malusMaxGiorno: 1.0,   // tetto per singolo giorno
+  capKgGiorno: 1.2,      // massimo dimagrimento avatar in un giorno (anti-abbuffata di tap)
+  maxCibiGiorno: 8,      // registrazioni cibo che danno effetto in un giorno
+  livelloBase: 120, livelloEsp: 1.32,
+  ranghi:[
+    {min:1 , nome:'Bradipo Riposato', ico:'🦥'},
+    {min:3 , nome:'Camminatore Curioso', ico:'🚶'},
+    {min:5 , nome:'Domatore di Scale', ico:'🪜'},
+    {min:8 , nome:'Guerriero del Mattino', ico:'🌅'},
+    {min:12, nome:'Muscolo Emergente', ico:'💪'},
+    {min:16, nome:'Cintura Stretta', ico:'🥋'},
+    {min:21, nome:'Leggenda in Forma', ico:'🏆'}
+  ]
+};
+function sogliaXp(L){ return Math.round(BAL.livelloBase*Math.pow(L,BAL.livelloEsp)); }
+function xpCumulati(L){ let t=0; for(let i=1;i<L;i++) t+=sogliaXp(i); return t; }
+function livelloDaXp(xp){ let L=1; while(xpCumulati(L+1)<=xp) L++; return L; }
+function rangoPer(L){ let r=BAL.ranghi[0]; for(const x of BAL.ranghi) if(L>=x.min) r=x; return r; }
+function progressoLivello(xp){
+  const L=livelloDaXp(xp), base=xpCumulati(L), next=xpCumulati(L+1);
+  return {L, dentro:xp-base, serve:next-base, perc:clamp((xp-base)/(next-base)*100,0,100)};
+}
+
+/* =========================================================================
+   2. CIBI  (kg: effetto sull'avatar — negativo = dimagrisce)
+   ========================================================================= */
+const CIBI = [
+  // buoni
+  {id:'mela',    e:'🍎', n:'Mela',      buono:true,  kg:-0.10, xp:12, msg:'Fibra, acqua e zero sensi di colpa.'},
+  {id:'acqua',   e:'💧', n:'Acqua',     buono:true,  kg:-0.08, xp:10, msg:'Spesso la fame è solo sete travestita.'},
+  {id:'insalata',e:'🥗', n:'Insalata',  buono:true,  kg:-0.12, xp:14, msg:'Volume tanto, calorie poche: il trucco migliore.'},
+  {id:'pesce',   e:'🐟', n:'Pesce',     buono:true,  kg:-0.12, xp:15, msg:'Proteine che saziano e omega-3 per il cuore.'},
+  {id:'verdura', e:'🥦', n:'Verdura',   buono:true,  kg:-0.11, xp:13, msg:'Mezzo piatto di verdura e hai già vinto il pranzo.'},
+  {id:'yogurt',  e:'🥛', n:'Yogurt',    buono:true,  kg:-0.09, xp:11, msg:'Bianco e senza zucchero: spuntino perfetto.'},
+  {id:'noci',    e:'🌰', n:'Noci',      buono:true,  kg:-0.07, xp:10, msg:'Una manciata sì, mezzo sacchetto no.'},
+  {id:'legumi',  e:'🫘', n:'Legumi',    buono:true,  kg:-0.11, xp:13, msg:'Sazietà lunghissima a pochi centesimi.'},
+  {id:'uova',    e:'🥚', n:'Uova',      buono:true,  kg:-0.09, xp:11, msg:'Colazione con proteine = meno fame alle 11.'},
+  {id:'agrumi',  e:'🍊', n:'Arancia',   buono:true,  kg:-0.09, xp:11, msg:'Meglio il frutto intero che il succo.'},
+  // cattivi
+  {id:'fritto',  e:'🍟', n:'Fritto',    buono:false, kg:+0.28, xp:6,  msg:'Croccante fuori, pesante dentro.'},
+  {id:'dolce',   e:'🍰', n:'Dolce',     buono:false, kg:+0.26, xp:6,  msg:'Lo zucchero chiama zucchero.'},
+  {id:'birra',   e:'🍺', n:'Birra',     buono:false, kg:+0.22, xp:6,  msg:'Calorie liquide: si bevono e non saziano.'},
+  {id:'pizza',   e:'🍕', n:'Extra pizza',buono:false,kg:+0.24, xp:6,  msg:'Una fetta è festa, la teglia è un problema.'},
+  {id:'snack',   e:'🍫', n:'Snack',     buono:false, kg:+0.20, xp:6,  msg:'Il pacchetto piccolo esiste per un motivo.'},
+  {id:'bibita',  e:'🥤', n:'Bibita',    buono:false, kg:+0.21, xp:6,  msg:'Un bicchiere = 6 zollette di zucchero.'},
+  {id:'insaccati',e:'🥓',n:'Insaccati', buono:false, kg:+0.22, xp:6,  msg:'Buonissimi, ma da occasione, non da abitudine.'},
+  {id:'salsa',   e:'🍯', n:'Salse',     buono:false, kg:+0.18, xp:6,  msg:'Il condimento nascosto pesa più del piatto.'}
+];
+const EVITA_KG = -0.22, EVITA_XP = 26;
+
+/* =========================================================================
+   3. ESERCIZI  (tutti a basso impatto, adatti a chi riparte da zero)
+   ========================================================================= */
+const ESERCIZI = [
+  {id:'squat',   e:'🦵', n:'Squat sulla sedia', tipo:'reps', reps:5,  tempo:4, kg:-0.22, xp:32, diff:2,
+   desc:'In piedi davanti a una sedia: scendi lentamente finché sfiori il sedile, poi risali. Schiena dritta, ginocchia dietro le punte dei piedi.',
+   cue:['GIÙ','SU']},
+  {id:'marcia',  e:'🚶', n:'Marcia sul posto',  tipo:'time', sec:60,  kg:-0.15, xp:22, diff:1,
+   desc:'Cammina sul posto alzando bene le ginocchia. Puoi farlo davanti alla TV.', cue:['SIN','DES']},
+  {id:'muro',    e:'🧱', n:'Flessioni al muro', tipo:'reps', reps:8,  tempo:4, kg:-0.20, xp:28, diff:1,
+   desc:'Mani al muro all\'altezza delle spalle, piedi a un passo. Piega le braccia e spingi.', cue:['GIÙ','SU']},
+  {id:'scale',   e:'🪜', n:'Rampa di scale',    tipo:'time', sec:90,  kg:-0.30, xp:42, diff:2,
+   desc:'Sali e scendi una rampa di scale con calma, tenendoti al corrimano.', cue:['SU','GIÙ']},
+  {id:'braccia', e:'🙆', n:'Alzate braccia',    tipo:'reps', reps:10, tempo:3, kg:-0.14, xp:20, diff:1,
+   desc:'Braccia lungo i fianchi, sollevale lateralmente fino alle spalle e riabbassale.', cue:['ALZA','GIÙ']},
+  {id:'plank',   e:'🧘', n:'Plank sulle ginocchia', tipo:'time', sec:30, kg:-0.22, xp:34, diff:3,
+   desc:'Avambracci e ginocchia a terra, corpo in linea. Respira, non trattenere il fiato.', cue:['TIENI']},
+  {id:'camminata',e:'👟',n:'Camminata veloce',  tipo:'time', sec:600, kg:-0.55, xp:75, diff:2,
+   desc:'10 minuti di camminata a passo svelto: devi poter parlare ma non cantare.', cue:['PASSO']},
+  {id:'stretch', e:'🤸', n:'Stretching dolce',  tipo:'time', sec:120, kg:-0.10, xp:18, diff:1,
+   desc:'Allunga collo, spalle, schiena e gambe. Mai a scatti, mai fino al dolore.', cue:['ALLUNGA']},
+  {id:'talloni', e:'🦶', n:'Alzate sui talloni',tipo:'reps', reps:12, tempo:3, kg:-0.13, xp:19, diff:1,
+   desc:'In piedi, appoggiati allo schienale di una sedia: sali sulle punte e scendi piano.', cue:['SU','GIÙ']},
+  {id:'addome',  e:'🛏️', n:'Ponte glutei',      tipo:'reps', reps:10, tempo:4, kg:-0.20, xp:30, diff:2,
+   desc:'Sdraiato a pancia in su, ginocchia piegate: solleva il bacino, stringi i glutei, scendi.', cue:['SU','GIÙ']}
+];
+const DIFF_LAB=['','Facile','Media','Impegnativa'];
+
+/* =========================================================================
+   4. SFIDE DEL GIORNO  (3 estratte ogni giorno, uguali per tutto il giorno)
+   ========================================================================= */
+const SFIDE = [
+  {id:'s_acqua',  e:'💧', n:'Bevi 6 bicchieri d\'acqua', kg:-0.12, xp:20},
+  {id:'s_fritto', e:'🚫', n:'Oggi niente fritto',        kg:-0.25, xp:30},
+  {id:'s_dolce',  e:'🍬', n:'Oggi niente dolci',         kg:-0.25, xp:30},
+  {id:'s_scale',  e:'🪜', n:'Scale invece dell\'ascensore', kg:-0.18, xp:24},
+  {id:'s_passeg', e:'🌳', n:'10 minuti d\'aria dopo cena', kg:-0.22, xp:28},
+  {id:'s_verdura',e:'🥦', n:'Verdura in metà del piatto',  kg:-0.20, xp:26},
+  {id:'s_piano',  e:'🍽️', n:'Mangia lentamente, posa la forchetta', kg:-0.14, xp:22},
+  {id:'s_zucchero',e:'☕', n:'Caffè senza zucchero tutto il giorno', kg:-0.15, xp:22},
+  {id:'s_bis',    e:'🙅', n:'Niente bis a tavola',        kg:-0.20, xp:26},
+  {id:'s_sonno',  e:'😴', n:'A letto entro le 23:30',     kg:-0.16, xp:24},
+  {id:'s_colaz',  e:'🥚', n:'Colazione con proteine',     kg:-0.16, xp:24},
+  {id:'s_pane',   e:'🥖', n:'Metà pane del solito',       kg:-0.18, xp:24},
+  {id:'s_spesa',  e:'🛒', n:'Spesa a piedi',              kg:-0.24, xp:30},
+  {id:'s_stretch',e:'🤸', n:'2 minuti di stretching appena sveglio', kg:-0.12, xp:20},
+  {id:'s_tv',     e:'📺', n:'Alzati ogni pubblicità',     kg:-0.16, xp:22},
+  {id:'s_amico',  e:'📞', n:'Racconta a qualcuno cosa hai fatto oggi', kg:-0.10, xp:18}
+];
+
+/* =========================================================================
+   5. CURIOSITÀ  (una nuova ogni giorno + archivio sfogliabile)
+   ========================================================================= */
+const CURIOSITA = [
+  {cat:'Metabolismo', t:'Dimagrire non è bruciare grasso in palestra', c:'Il grasso se ne va soprattutto… respirando. Quando il corpo lo consuma, circa l\'84% esce come anidride carbonica con il respiro e il resto come acqua. Ecco perché il movimento che ti fa respirare di più, anche solo camminare, conta davvero.'},
+  {cat:'Nutrizione', t:'Le calorie liquide non saziano', c:'Il cervello non registra bene le calorie bevute. Un bicchiere di bibita o di vino aggiunge energia senza spegnere la fame: è il modo più silenzioso di ingrassare.'},
+  {cat:'Movimento', t:'Camminare vale più di quanto pensi', c:'30 minuti al giorno di camminata svelta riducono in modo misurabile il rischio cardiovascolare, migliorano la glicemia e l\'umore. Non serve correre: serve costanza.'},
+  {cat:'Nutrizione', t:'Le proteine costano fatica al corpo', c:'Digerire le proteine consuma il 20-30% delle calorie che contengono (contro il 5-10% dei grassi). Una colazione con uova o yogurt greco ti fa arrivare a pranzo con meno fame.'},
+  {cat:'Mente', t:'La fame emotiva arriva di colpo', c:'La fame vera cresce piano e accetta qualsiasi cibo. Quella emotiva arriva all\'improvviso e vuole una cosa precisa. Riconoscerla è metà del lavoro: prova ad aspettare 10 minuti.'},
+  {cat:'Metabolismo', t:'Il muscolo è un forno acceso', c:'Un chilo di muscolo consuma energia anche quando dormi. Perdere peso mangiando pochissimo e senza muoverti fa perdere anche muscolo: si dimagrisce, ma si spegne il forno.'},
+  {cat:'Nutrizione', t:'Il piatto grande inganna', c:'La stessa porzione in un piatto piccolo sembra più abbondante e sazia di più. È un trucco gratuito che funziona su chiunque, anche su chi lo conosce.'},
+  {cat:'Movimento', t:'Stare seduti è una posizione, non un destino', c:'Interrompere lo stare seduti ogni 30 minuti con 2-3 minuti in piedi migliora glicemia e circolazione, anche senza fare un vero allenamento.'},
+  {cat:'Mente', t:'Il peso oscilla anche di 2 kg in un giorno', c:'Sale, acqua, digestione e sonno spostano l\'ago della bilancia. Guardare la tendenza su 2-3 settimane è utile; pesarsi tre volte al giorno è solo ansia.'},
+  {cat:'Nutrizione', t:'La fibra è un tappo naturale', c:'Verdura, legumi e frutta intera riempiono lo stomaco con pochissime calorie e rallentano l\'assorbimento degli zuccheri. Iniziare il pasto dalla verdura riduce quanto mangi dopo.'},
+  {cat:'Metabolismo', t:'Dormire poco fa mangiare di più', c:'Con meno di 6 ore di sonno aumenta la grelina (ormone della fame) e cala la leptina (quello della sazietà). Dormire bene è parte della dieta, non un lusso.'},
+  {cat:'Movimento', t:'Le gambe sono il muscolo più grande', c:'Squat, scale e camminata coinvolgono la massa muscolare più grande del corpo: sono gli esercizi che consumano di più a parità di fatica percepita.'},
+  {cat:'Nutrizione', t:'"Light" non vuol dire dimagrante', c:'Un prodotto può essere light rispetto alla sua versione originale ed essere comunque molto calorico. Conta l\'etichetta per 100 g, non la scritta grande sul davanti.'},
+  {cat:'Mente', t:'La regola del "mai due volte di fila"', c:'Saltare un giorno capita a tutti. Il problema inizia al secondo giorno saltato di fila. Un\'abitudine sopravvive se non manca mai due volte consecutive.'},
+  {cat:'Metabolismo', t:'Il corpo si adatta e rallenta', c:'Dimagrendo, il corpo consuma un po\' meno perché c\'è meno massa da muovere. È normale che dopo qualche settimana la discesa rallenti: non è un fallimento, è fisica.'},
+  {cat:'Movimento', t:'La forza protegge dalle cadute', c:'Dopo i 50 anni si perde naturalmente massa muscolare. Alzarsi dalla sedia senza mani, 10 volte al giorno, è uno degli esercizi più protettivi che esistano.'},
+  {cat:'Nutrizione', t:'Il sale non ingrassa, ma gonfia', c:'Il sale trattiene acqua: dopo una cena salata la bilancia sale anche di un chilo. Non è grasso, se ne va in un paio di giorni bevendo normalmente.'},
+  {cat:'Mente', t:'Dirlo a qualcuno raddoppia le probabilità', c:'Chi comunica il proprio obiettivo a una persona di fiducia e le riferisce i progressi ha molte più probabilità di mantenerlo. Ecco perché questa app ti chiede di raccontarlo.'},
+  {cat:'Nutrizione', t:'Masticare è un cronometro', c:'Il segnale di sazietà arriva al cervello dopo circa 20 minuti. Mangiare in 8 minuti significa finire prima che il corpo abbia il tempo di dirti "basta".'},
+  {cat:'Movimento', t:'Fare qualcosa batte fare tutto', c:'5 minuti di movimento valgono infinitamente più di 45 minuti rimandati a domani. La costanza minima batte l\'intensità occasionale.'},
+  {cat:'Metabolismo', t:'Il grasso della pancia è il primo a rispondere', c:'Il grasso viscerale, quello attorno agli organi, è il più pericoloso ma anche il più reattivo: risponde in fretta al movimento regolare, spesso prima che i vestiti cambino taglia.'},
+  {cat:'Nutrizione', t:'Mezzo litro d\'acqua prima di mangiare', c:'Bere circa 500 ml d\'acqua mezz\'ora prima dei pasti aiuta a mangiare meno. È gratis e non ha controindicazioni.'},
+  {cat:'Mente', t:'Non tenerlo in casa', c:'La forza di volontà è una risorsa che si esaurisce. Non comprare lo snack è una decisione sola; resistergli nell\'armadio sono venti decisioni al giorno.'},
+  {cat:'Movimento', t:'Il fiato torna prima dei muscoli', c:'Le prime due settimane il miglioramento più evidente è cardiovascolare: stesse scale, meno affanno. È il segnale che il corpo sta già cambiando.'},
+  {cat:'Nutrizione', t:'La frutta intera batte il succo', c:'Un\'arancia ha fibra e ti sazia. Il succo di tre arance ha lo zucchero di tre arance senza fibra: entra in circolo in pochi minuti.'},
+  {cat:'Metabolismo', t:'Perdere 5 kg cambia già la salute', c:'Non serve arrivare al peso ideale: già un calo del 5-10% del peso migliora pressione, glicemia e colesterolo in modo clinicamente rilevante.'},
+  {cat:'Mente', t:'Lo sgarro non annulla la settimana', c:'Una cena abbondante non cancella sei giorni buoni: servono circa 7000 calorie in eccesso per accumulare un chilo di grasso. Il vero danno è mollare il giorno dopo.'},
+  {cat:'Movimento', t:'Anche le faccende contano', c:'Pulire, giardinaggio, portare la spesa: è il cosiddetto NEAT, il movimento non sportivo. In una giornata può valere più di un\'ora di palestra.'},
+  {cat:'Nutrizione', t:'L\'ordine del piatto conta', c:'Mangiare prima verdura e proteine e poi i carboidrati riduce il picco di zucchero nel sangue rispetto all\'ordine inverso, a parità di cibo.'},
+  {cat:'Mente', t:'Misura le abitudini, non solo il peso', c:'Giorni di movimento, bicchieri d\'acqua, sere senza spuntino: sono cose che controlli tu. Il peso è solo il risultato, e arriva in ritardo.'}
+];
+
+/* =========================================================================
+   6. MEDAGLIE
+   ========================================================================= */
+const MEDAGLIE = [
+  {id:'primo',   e:'🌱', n:'Primo passo',      test:s=>s.contatori.azioni>=1},
+  {id:'serie3',  e:'🔥', n:'3 giorni di fila', test:s=>s.recordStreak>=3},
+  {id:'serie7',  e:'⚡', n:'Una settimana',    test:s=>s.recordStreak>=7},
+  {id:'serie30', e:'👑', n:'Un mese intero',   test:s=>s.recordStreak>=30},
+  {id:'kg5',     e:'🎈', n:'-5 kg avatar',     test:s=>(BAL.pesoStart-s.pesoAvatar)>=5},
+  {id:'kg10',    e:'🪁', n:'-10 kg avatar',    test:s=>(BAL.pesoStart-s.pesoAvatar)>=10},
+  {id:'ex25',    e:'💪', n:'25 esercizi',      test:s=>s.contatori.esercizi>=25},
+  {id:'ex100',   e:'🏋️', n:'100 esercizi',     test:s=>s.contatori.esercizi>=100},
+  {id:'resist10',e:'🛡️', n:'10 tentazioni battute', test:s=>s.contatori.evitate>=10},
+  {id:'sane50',  e:'🥗', n:'50 scelte sane',   test:s=>s.contatori.sane>=50},
+  {id:'sfide20', e:'📜', n:'20 sfide vinte',   test:s=>s.contatori.sfide>=20},
+  {id:'lvl10',   e:'🏆', n:'Livello 10',       test:s=>livelloDaXp(s.xp)>=10}
+];
+
+/* =========================================================================
+   7. STATO
+   ========================================================================= */
+let S = null;
+
+function statoNuovo(){
+  const oggi = dayKey();
+  return {
+    v:1, onboarded:false,
+    nomeAvatar:'Bruno', nomeUtente:'',
+    look:{capelli:'grigi', baffi:true},
+    pesoAvatar:BAL.pesoStart, obiettivo:BAL.obiettivoDefault,
+    altezza:0,
+    xp:0, streak:0, recordStreak:0,
+    ultimoGiornoAttivo:null, ultimoCheck:oggi, creato:oggi,
+    storico:[{d:oggi, kg:BAL.pesoStart}],
+    pesiReali:[],
+    contatori:{azioni:0, esercizi:0, reps:0, minuti:0, sane:0, evitate:0, sgarri:0, sfide:0},
+    oggi:{d:oggi, kgTolti:0, cibi:0, sfide:[], azioni:0},
+    diario:[],
+    medaglie:[],
+    curiositaLette:[],
+    audio:{musica:true, sfx:true, voce:true}
+  };
+}
+function carica(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    S = raw ? JSON.parse(raw) : statoNuovo();
+  }catch(e){ S = statoNuovo(); }
+  // migrazione morbida: riempi campi mancanti
+  const base=statoNuovo();
+  for(const k in base) if(S[k]===undefined) S[k]=base[k];
+  for(const k in base.contatori) if(S.contatori[k]===undefined) S.contatori[k]=0;
+  for(const k in base.audio) if(S.audio[k]===undefined) S.audio[k]=base.audio[k];
+}
+function salva(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+
+function diario(ico, testo, kg=0, cls=''){
+  S.diario.unshift({t:Date.now(), e:ico, x:testo, kg:r2(kg), c:cls});
+  if(S.diario.length>300) S.diario.pop();
+}
+
+/* =========================================================================
+   8. AUDIO — musica rilassata e suoni generati dal vivo (nessun file esterno)
+   ========================================================================= */
+const AU = {
+  ctx:null, master:null, mus:null, sfx:null, verb:null,
+  on:false, timer:null, step:0, nextAt:0,
+
+  ensure(){
+    if(this.ctx) { if(this.ctx.state==='suspended') this.ctx.resume(); return true; }
+    const AC = window.AudioContext||window.webkitAudioContext;
+    if(!AC) return false;
+    try{
+      this.ctx = new AC();
+      this.master = this.ctx.createGain(); this.master.gain.value=0.9; this.master.connect(this.ctx.destination);
+      // riverbero: impulso generato proceduralmente
+      this.verb = this.ctx.createConvolver();
+      const len = this.ctx.sampleRate*2.4, buf=this.ctx.createBuffer(2,len,this.ctx.sampleRate);
+      for(let c=0;c<2;c++){ const d=buf.getChannelData(c);
+        for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
+      this.verb.buffer=buf;
+      const vg=this.ctx.createGain(); vg.gain.value=0.32; this.verb.connect(vg); vg.connect(this.master);
+      this.mus = this.ctx.createGain(); this.mus.gain.value=0; this.mus.connect(this.master); this.mus.connect(this.verb);
+      this.sfx = this.ctx.createGain(); this.sfx.gain.value=0.55; this.sfx.connect(this.master); this.sfx.connect(this.verb);
+      return true;
+    }catch(e){ return false; }
+  },
+
+  /* ---- musica: pad lento su giro Am – F – C – G ---- */
+  ACCORDI:[
+    [110.00,164.81,220.00,329.63], // Am
+    [ 87.31,174.61,261.63,349.23], // F
+    [130.81,196.00,261.63,392.00], // C
+    [ 98.00,146.83,246.94,392.00]  // G
+  ],
+  PENTA:[440,493.88,587.33,659.25,880,987.77],
+
+  musicaOn(){
+    if(!this.ensure()) return;
+    if(this.on) return;
+    this.on=true;
+    this.mus.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.mus.gain.setValueAtTime(this.mus.gain.value, this.ctx.currentTime);
+    this.mus.gain.linearRampToValueAtTime(0.20, this.ctx.currentTime+3);
+    this.nextAt = this.ctx.currentTime+0.1;
+    this.tick();
+    this.timer = setInterval(()=>this.tick(), 1000);
+  },
+  musicaOff(){
+    this.on=false;
+    if(this.timer){ clearInterval(this.timer); this.timer=null; }
+    if(this.ctx&&this.mus){
+      this.mus.gain.cancelScheduledValues(this.ctx.currentTime);
+      this.mus.gain.setValueAtTime(this.mus.gain.value, this.ctx.currentTime);
+      this.mus.gain.linearRampToValueAtTime(0, this.ctx.currentTime+1.6);
+    }
+  },
+  tick(){
+    if(!this.on||!this.ctx) return;
+    const t=this.ctx.currentTime;
+    while(this.nextAt < t+2){
+      this.accordo(this.ACCORDI[this.step%4], this.nextAt, 7.6);
+      if(this.step%2===1) this.campana(this.nextAt+1.6+Math.random()*3);
+      this.nextAt += 7.2; this.step++;
+    }
+  },
+  accordo(freqs, at, dur){
+    const g=this.ctx.createGain(); g.gain.setValueAtTime(0.0001,at);
+    g.gain.exponentialRampToValueAtTime(0.30, at+2.4);
+    g.gain.exponentialRampToValueAtTime(0.0001, at+dur);
+    const f=this.ctx.createBiquadFilter(); f.type='lowpass';
+    f.frequency.setValueAtTime(500,at); f.frequency.linearRampToValueAtTime(1150, at+dur*0.5);
+    f.Q.value=0.6;
+    g.connect(f); f.connect(this.mus);
+    freqs.forEach((fr,i)=>{
+      [0,-5,5].slice(0, i===0?1:2).forEach(det=>{
+        const o=this.ctx.createOscillator();
+        o.type = i===0?'sine':'triangle';
+        o.frequency.value=fr; o.detune.value=det;
+        const og=this.ctx.createGain(); og.gain.value = i===0?0.5:0.22;
+        o.connect(og); og.connect(g); o.start(at); o.stop(at+dur+0.2);
+      });
+    });
+  },
+  campana(at){
+    if(at < this.ctx.currentTime) return;
+    const fr=this.PENTA[Math.floor(Math.random()*this.PENTA.length)];
+    const o=this.ctx.createOscillator(); o.type='sine'; o.frequency.value=fr;
+    const g=this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001,at);
+    g.gain.exponentialRampToValueAtTime(0.10, at+0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, at+3.2);
+    o.connect(g); g.connect(this.mus); o.start(at); o.stop(at+3.4);
+  },
+
+  /* ---- effetti sonori ---- */
+  beep(f1,f2,dur,type='sine',vol=0.5,delay=0){
+    if(!S||!S.audio.sfx) return;
+    if(!this.ensure()) return;
+    const t=this.ctx.currentTime+delay;
+    const o=this.ctx.createOscillator(); o.type=type;
+    o.frequency.setValueAtTime(f1,t);
+    if(f2!==f1) o.frequency.exponentialRampToValueAtTime(Math.max(30,f2), t+dur);
+    const g=this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol, t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(this.sfx); o.start(t); o.stop(t+dur+0.05);
+  },
+  rumore(dur=0.35,vol=0.25,f=1200){
+    if(!S||!S.audio.sfx||!this.ensure()) return;
+    const t=this.ctx.currentTime, n=this.ctx.sampleRate*dur;
+    const b=this.ctx.createBuffer(1,n,this.ctx.sampleRate), d=b.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,1.8);
+    const s=this.ctx.createBufferSource(); s.buffer=b;
+    const bp=this.ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.setValueAtTime(f,t);
+    bp.frequency.exponentialRampToValueAtTime(f*0.28,t+dur);
+    const g=this.ctx.createGain(); g.gain.value=vol;
+    s.connect(bp); bp.connect(g); g.connect(this.sfx); s.start(t);
+  },
+  pop(){ this.beep(620,980,0.13,'sine',0.42); },
+  buono(){ [0,0.09,0.18].forEach((d,i)=>this.beep([659.25,830.61,987.77][i],[659.25,830.61,987.77][i],0.32,'sine',0.34,d)); },
+  cattivo(){ this.beep(240,90,0.34,'sawtooth',0.26); this.rumore(0.25,0.12,500); },
+  successo(){ [523.25,659.25,783.99,1046.5].forEach((f,i)=>this.beep(f,f,0.42,'triangle',0.32,i*0.1)); },
+  livello(){ [523.25,659.25,783.99,1046.5,1318.5].forEach((f,i)=>this.beep(f,f,0.6,'triangle',0.36,i*0.13)); this.rumore(0.6,0.1,2400); },
+  tic(){ this.beep(880,880,0.06,'square',0.16); },
+  toc(){ this.beep(440,440,0.09,'square',0.2); },
+  via(){ this.beep(1046.5,1046.5,0.28,'square',0.3); },
+  swoosh(){ this.rumore(0.3,0.18,2000); }
+};
+
+/* voce guida (opzionale) */
+function parla(testo){
+  if(!S.audio.voce || !('speechSynthesis' in window)) return;
+  try{
+    const u=new SpeechSynthesisUtterance(testo);
+    u.lang='it-IT'; u.rate=0.95; u.pitch=1;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* =========================================================================
+   9. EFFETTI VISIVI
+   ========================================================================= */
+const FX = {
+  cv:null, ctx:null, parts:[], raf:null,
+  init(){
+    this.cv=$('#fxCanvas'); this.ctx=this.cv.getContext('2d'); this.resize();
+    addEventListener('resize', ()=>this.resize());
+  },
+  resize(){
+    const d=devicePixelRatio||1;
+    this.cv.width=innerWidth*d; this.cv.height=innerHeight*d;
+    this.cv.style.width=innerWidth+'px'; this.cv.style.height=innerHeight+'px';
+    this.ctx.setTransform(d,0,0,d,0,0);
+  },
+  burst(x,y,n=34,colors=['#2f9e6f','#8fe3c0','#f0b93b','#3d8fd6','#f2913d']){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=2.4+Math.random()*7;
+      this.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3.2,
+        g:0.24, life:1, dec:0.012+Math.random()*0.012,
+        w:5+Math.random()*7, h:4+Math.random()*8, rot:Math.random()*6.3, vr:(Math.random()-0.5)*0.35,
+        c:colors[Math.floor(Math.random()*colors.length)], sh:Math.random()<0.35?'c':'r'});
+    }
+    this.run();
+  },
+  pioggia(n=70){
+    for(let i=0;i<n;i++){
+      this.parts.push({x:Math.random()*innerWidth, y:-20-Math.random()*260,
+        vx:(Math.random()-0.5)*1.6, vy:1.6+Math.random()*2.6, g:0.045, life:1, dec:0.0042,
+        w:6+Math.random()*7, h:5+Math.random()*9, rot:Math.random()*6.3, vr:(Math.random()-0.5)*0.28,
+        c:['#2f9e6f','#8fe3c0','#f0b93b','#3d8fd6','#f2913d','#8b6ad6'][Math.floor(Math.random()*6)], sh:'r'});
+    }
+    this.run();
+  },
+  scintille(x,y,n=16,c='#f0b93b'){
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, sp=1+Math.random()*3.5;
+      this.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:0.02,life:1,dec:0.026,
+        w:3+Math.random()*3,h:3+Math.random()*3,rot:0,vr:0.2,c,sh:'c'});
+    }
+    this.run();
+  },
+  run(){ if(!this.raf) this.raf=requestAnimationFrame(()=>this.loop()); },
+  loop(){
+    const c=this.ctx; c.clearRect(0,0,innerWidth,innerHeight);
+    this.parts=this.parts.filter(p=>{
+      p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life-=p.dec;
+      if(p.life<=0||p.y>innerHeight+60) return false;
+      c.save(); c.globalAlpha=Math.max(0,Math.min(1,p.life)); c.translate(p.x,p.y); c.rotate(p.rot); c.fillStyle=p.c;
+      if(p.sh==='c'){ c.beginPath(); c.arc(0,0,p.w/2,0,6.3); c.fill(); }
+      else c.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      c.restore(); return true;
+    });
+    if(this.parts.length) this.raf=requestAnimationFrame(()=>this.loop());
+    else { this.raf=null; c.clearRect(0,0,innerWidth,innerHeight); }
+  }
+};
+
+function floaty(testo, x, y, colore='#2f9e6f'){
+  const el=document.createElement('div');
+  el.className='floaty'; el.textContent=testo;
+  el.style.left=x+'px'; el.style.top=y+'px'; el.style.color=colore;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1300);
+}
+function toast(testo, sotto='', cls='ok'){
+  const el=document.createElement('div');
+  el.className='toast '+cls;
+  el.innerHTML='<span></span>'+(sotto?'<small></small>':'');
+  el.firstChild.textContent=testo;
+  if(sotto) el.lastChild.textContent=sotto;
+  $('#toasts').appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .35s,transform .35s'; el.style.opacity='0'; el.style.transform='translateY(-14px)'; },2200);
+  setTimeout(()=>el.remove(),2650);
+}
+function vibra(ms){ try{ navigator.vibrate&&navigator.vibrate(ms); }catch(e){} }
+
+/* =========================================================================
+   10. AVATAR — disegnato in SVG, la pancia si sgonfia davvero
+   ========================================================================= */
+const PELLE='#f2c8a0', PELLE_S='#dda87c', CAMICIA='#4a90c2', CAMICIA_S='#3a76a1',
+      PANT='#3a4a63', SCARPA='#2f3542';
+const CAPELLI={grigi:'#9aa5ab', castani:'#6d4a30', bianchi:'#dfe4e6', calvo:null};
+
+let uid=0;
+function AvatarView(host, opts={}){
+  const id='av'+(++uid);
+  host.innerHTML=`
+<svg id="${id}" viewBox="0 0 220 280" preserveAspectRatio="xMidYMax meet" class="avSvg">
+  <defs>
+    <clipPath id="${id}clip"><path class="torso" d=""/></clipPath>
+    <radialGradient id="${id}gp" cx="38%" cy="30%">
+      <stop offset="0%" stop-color="#ffe0c2"/><stop offset="100%" stop-color="${PELLE}"/>
+    </radialGradient>
+    <linearGradient id="${id}gs" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${CAMICIA}"/><stop offset="100%" stop-color="${CAMICIA_S}"/>
+    </linearGradient>
+  </defs>
+  <ellipse class="ombra" cx="110" cy="266" rx="56" ry="9" fill="rgba(31,90,70,.16)"/>
+  <g class="all">
+    <g class="gambe">
+      <path class="gambaL" stroke="${PANT}" stroke-linecap="round" fill="none"/>
+      <path class="gambaR" stroke="${PANT}" stroke-linecap="round" fill="none"/>
+      <ellipse class="scarpaL" rx="15" ry="7" fill="${SCARPA}"/>
+      <ellipse class="scarpaR" rx="15" ry="7" fill="${SCARPA}"/>
+    </g>
+    <g class="corpo">
+      <path class="braccioL" stroke="url(#${id}gs)" stroke-linecap="round" fill="none"/>
+      <path class="braccioR" stroke="url(#${id}gs)" stroke-linecap="round" fill="none"/>
+      <path class="torso" fill="url(#${id}gp)"/>
+      <g clip-path="url(#${id}clip)">
+        <rect class="maglia" x="0" width="220" fill="url(#${id}gs)"/>
+        <rect class="pantaloni" x="0" width="220" fill="${PANT}"/>
+        <ellipse class="pancia" fill="rgba(0,0,0,.06)"/>
+        <path class="pieghe" stroke="rgba(0,0,0,.07)" fill="none" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <ellipse class="manoL" rx="9" ry="9" fill="${PELLE}"/>
+      <ellipse class="manoR" rx="9" ry="9" fill="${PELLE}"/>
+    </g>
+    <g class="testa">
+      <path class="collo" stroke="${PELLE_S}" stroke-linecap="round" fill="none"/>
+      <ellipse class="mento" fill="${PELLE_S}" opacity=".55"/>
+      <ellipse class="faccia" fill="url(#${id}gp)"/>
+      <path class="capelli" fill="${CAPELLI.grigi}"/>
+      <ellipse class="occhioL" rx="3.4" ry="4" fill="#3b2b22"/>
+      <ellipse class="occhioR" rx="3.4" ry="4" fill="#3b2b22"/>
+      <path class="sopraL" stroke="#6b4a35" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      <path class="sopraR" stroke="#6b4a35" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      <path class="bocca" stroke="#8a4b3c" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path class="baffi" fill="#7d6555"/>
+      <ellipse class="guanciaL" rx="6" ry="3.6" fill="rgba(233,120,110,.28)"/>
+      <ellipse class="guanciaR" rx="6" ry="3.6" fill="rgba(233,120,110,.28)"/>
+    </g>
+    <g class="extra"></g>
+  </g>
+</svg>`;
+  const svg=$('#'+id,host), q=(c)=>$('.'+c,svg);
+  const all=q('all');
+  all.style.transformBox='fill-box'; all.style.transformOrigin='center bottom';
+  let b=1, mood=0, giu=false;
+
+  function disegna(){
+    const sw=30+9*b, bw=24+34*b, hw=22+13*b;
+    const sy=86, hy=198;
+    const cx=110;
+    const torsoD=
+      `M ${cx-sw} ${sy} C ${cx-sw-8} ${sy+22}, ${cx-bw} ${sy+34}, ${cx-bw} ${sy+62}`+
+      ` C ${cx-bw} ${sy+86}, ${cx-hw-5} ${hy-8}, ${cx-hw} ${hy}`+
+      ` L ${cx+hw} ${hy}`+
+      ` C ${cx+hw+5} ${hy-8}, ${cx+bw} ${sy+86}, ${cx+bw} ${sy+62}`+
+      ` C ${cx+bw} ${sy+34}, ${cx+sw+8} ${sy+22}, ${cx+sw} ${sy} Z`;
+    $$('.torso',svg).forEach(p=>p.setAttribute('d',torsoD));
+
+    q('maglia').setAttribute('y', sy-6); q('maglia').setAttribute('height', 96+b*10);
+    q('pantaloni').setAttribute('y', sy+90+b*10); q('pantaloni').setAttribute('height', 40);
+    const pan=q('pancia');
+    pan.setAttribute('cx',cx+2); pan.setAttribute('cy',sy+62);
+    pan.setAttribute('rx',bw*0.72); pan.setAttribute('ry',26+b*12);
+    pan.setAttribute('opacity', 0.03+b*0.09);
+    q('pieghe').setAttribute('d', `M ${cx-bw*0.5} ${sy+44} Q ${cx} ${sy+50+b*4} ${cx+bw*0.5} ${sy+44}`);
+
+    // gambe
+    const lw=19+7*b, gx=hw*0.48;
+    q('gambaL').setAttribute('d',`M ${cx-gx} ${hy-4} L ${cx-gx-3-b*3} 250`);
+    q('gambaR').setAttribute('d',`M ${cx+gx} ${hy-4} L ${cx+gx+3+b*3} 250`);
+    q('gambaL').setAttribute('stroke-width',lw); q('gambaR').setAttribute('stroke-width',lw);
+    q('scarpaL').setAttribute('cx',cx-gx-5-b*3); q('scarpaL').setAttribute('cy',256);
+    q('scarpaR').setAttribute('cx',cx+gx+5+b*3); q('scarpaR').setAttribute('cy',256);
+
+    // braccia
+    const aw=15+5*b, ay=sy+8;
+    const lx=cx-sw+3, rx=cx+sw-3;
+    const spanX=bw+10+b*6;
+    q('braccioL').setAttribute('d',`M ${lx} ${ay} Q ${cx-spanX-4} ${ay+40} ${cx-spanX} ${ay+78}`);
+    q('braccioR').setAttribute('d',`M ${rx} ${ay} Q ${cx+spanX+4} ${ay+40} ${cx+spanX} ${ay+78}`);
+    q('braccioL').setAttribute('stroke-width',aw); q('braccioR').setAttribute('stroke-width',aw);
+    q('manoL').setAttribute('cx',cx-spanX); q('manoL').setAttribute('cy',ay+80);
+    q('manoR').setAttribute('cx',cx+spanX); q('manoR').setAttribute('cy',ay+80);
+
+    // testa
+    const hr=25+4*b, hy2=50;
+    q('collo').setAttribute('d',`M ${cx} ${hy2+hr-4} L ${cx} ${sy+3}`);
+    q('collo').setAttribute('stroke-width',16+b*9);
+    q('faccia').setAttribute('cx',cx); q('faccia').setAttribute('cy',hy2);
+    q('faccia').setAttribute('rx',hr); q('faccia').setAttribute('ry',26+b*2);
+    const men=q('mento');
+    men.setAttribute('cx',cx); men.setAttribute('cy',hy2+19+b*3);
+    men.setAttribute('rx',hr*0.62); men.setAttribute('ry',5+b*7);
+    men.setAttribute('opacity', clamp((b-0.35)*0.8,0,0.55));
+    // capelli
+    const col=CAPELLI[(S&&S.look&&S.look.capelli)||'grigi'];
+    const cap=q('capelli');
+    if(col){ cap.setAttribute('fill',col);
+      cap.setAttribute('d',`M ${cx-hr} ${hy2-4} Q ${cx-hr+2} ${hy2-30} ${cx} ${hy2-28} Q ${cx+hr-2} ${hy2-30} ${cx+hr} ${hy2-4} Q ${cx+hr-6} ${hy2-16} ${cx} ${hy2-14} Q ${cx-hr+6} ${hy2-16} ${cx-hr} ${hy2-4} Z`);
+      cap.style.display='';
+    } else cap.style.display='none';
+    // occhi
+    const ex=9.5;
+    q('occhioL').setAttribute('cx',cx-ex); q('occhioL').setAttribute('cy',hy2-2);
+    q('occhioR').setAttribute('cx',cx+ex); q('occhioR').setAttribute('cy',hy2-2);
+    const sopraY=hy2-11 + (mood<0? 2:0);
+    q('sopraL').setAttribute('d',`M ${cx-ex-5} ${sopraY+(mood<0?-2:0)} Q ${cx-ex} ${sopraY-3} ${cx-ex+5} ${sopraY+(mood<0?2:0)}`);
+    q('sopraR').setAttribute('d',`M ${cx+ex-5} ${sopraY+(mood<0?2:0)} Q ${cx+ex} ${sopraY-3} ${cx+ex+5} ${sopraY+(mood<0?-2:0)}`);
+    // bocca
+    const my=hy2+12, m=clamp(mood,-1,1);
+    q('bocca').setAttribute('d',`M ${cx-8} ${my} Q ${cx} ${my+7*m} ${cx+8} ${my}`);
+    // baffi
+    const baf=q('baffi');
+    if(S&&S.look&&S.look.baffi){
+      baf.style.display='';
+      baf.setAttribute('d',`M ${cx-10} ${my-5} Q ${cx} ${my-9} ${cx+10} ${my-5} Q ${cx} ${my-2} ${cx-10} ${my-5} Z`);
+    } else baf.style.display='none';
+    q('guanciaL').setAttribute('cx',cx-hr*0.66); q('guanciaL').setAttribute('cy',hy2+5);
+    q('guanciaR').setAttribute('cx',cx+hr*0.66); q('guanciaR').setAttribute('cy',hy2+5);
+    q('ombra').setAttribute('rx',44+b*16);
+  }
+
+  let raf=null;
+  function tween(target,ms=700){
+    const from=b, delta=target-from, t0=performance.now();
+    if(raf) cancelAnimationFrame(raf);
+    const step=(t)=>{
+      const k=clamp((t-t0)/ms,0,1);
+      b = from + delta*(1-Math.pow(1-k,3));
+      disegna();
+      if(k<1) raf=requestAnimationFrame(step); else raf=null;
+    };
+    raf=requestAnimationFrame(step);
+  }
+
+  disegna();
+  return {
+    svg, host,
+    set(bb, mm, anima=true){
+      mood = (mm===undefined?mood:mm);
+      const t=clamp(bb,0,1.2);
+      if(anima && Math.abs(t-b)>0.001) tween(t); else { b=t; disegna(); }
+    },
+    mood(m){ mood=m; disegna(); },
+    respira(on){
+      all.style.animation = on ? 'respiro 3.6s ease-in-out infinite' : 'none';
+    },
+    squat(giu2, ms){
+      giu=giu2;
+      all.style.animation='none';
+      all.style.transition=`transform ${ms}ms cubic-bezier(.4,.1,.3,1)`;
+      all.style.transform = giu ? 'translateY(20px) scaleY(.90) scaleX(1.04)' : 'translateY(0) scaleY(1) scaleX(1)';
+    },
+    salta(){
+      all.style.animation='none';
+      all.style.transition='transform .22s cubic-bezier(.2,1.6,.4,1)';
+      all.style.transform='translateY(-16px) scale(1.03)';
+      setTimeout(()=>{ all.style.transform='translateY(0) scale(1)'; },230);
+      setTimeout(()=>{ all.style.transition=''; this.respira(true); },520);
+    },
+    scuoti(){ host.classList.add('shake'); setTimeout(()=>host.classList.remove('shake'),520); },
+    sudore(){
+      const g=q('extra');
+      const d=document.createElementNS('http://www.w3.org/2000/svg','path');
+      d.setAttribute('d','M 150 40 q 6 10 0 14 q -6 -4 0 -14 Z');
+      d.setAttribute('fill','#6fc3ee'); d.setAttribute('opacity','.9');
+      d.style.transition='transform 1s linear, opacity 1s'; g.appendChild(d);
+      requestAnimationFrame(()=>{ d.style.transform='translateY(46px)'; d.style.opacity='0'; });
+      setTimeout(()=>d.remove(),1100);
+    },
+    centro(){ const r=host.getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height*0.52}; }
+  };
+}
+/* keyframe del respiro (iniettato: serve dentro l'SVG) */
+(function(){
+  const st=document.createElement('style');
+  st.textContent='@keyframes respiro{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-2px) scaleY(1.012)}}'+
+    '.avSvg{width:100%;height:100%;display:block;overflow:visible}';
+  document.head.appendChild(st);
+})();
+
+/* fattore pancia da peso */
+function fattorePancia(kg){
+  const span = BAL.pesoStart - S.obiettivo;
+  return clamp((kg - S.obiettivo)/(span||1), 0, 1.2);
+}
+function umore(){
+  if(!S.ultimoGiornoAttivo) return 0.3;
+  const g=daysBetweenKeys(S.ultimoGiornoAttivo, dayKey());
+  if(g<=0) return 1;
+  if(g===1) return 0.5;
+  if(g===2) return 0;
+  return -0.9;
+}
+
+/* =========================================================================
+   11. LOGICA DI GIOCO
+   ========================================================================= */
+function addDays(key,n){ const d=new Date(key+'T00:00:00'); d.setDate(d.getDate()+n); return dayKey(d); }
+function hash(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return Math.abs(h); }
+
+function sfideDelGiorno(){
+  const seed=hash('sfide'+dayKey()), out=[], usati=new Set();
+  for(let i=0;i<3;i++){
+    let k=(seed+i*7919)%SFIDE.length;
+    while(usati.has(k)) k=(k+1)%SFIDE.length;
+    usati.add(k); out.push(SFIDE[k]);
+  }
+  return out;
+}
+function curiositaDelGiorno(){
+  const g=Math.floor(new Date(dayKey()+'T00:00:00')/86400000);
+  return CURIOSITA[g % CURIOSITA.length];
+}
+
+function segnaStorico(){
+  const k=dayKey(), ult=S.storico[S.storico.length-1];
+  if(ult && ult.d===k) ult.kg=r2(S.pesoAvatar);
+  else S.storico.push({d:k, kg:r2(S.pesoAvatar)});
+  if(S.storico.length>400) S.storico.shift();
+}
+
+/* --- cambio giorno + malus da inattività --- */
+function controlloGiorno(){
+  const oggi=dayKey();
+  if(!S.oggi || S.oggi.d!==oggi) S.oggi={d:oggi, kgTolti:0, cibi:0, sfide:[], azioni:0};
+  if(S.ultimoCheck===oggi){ segnaStorico(); return null; }
+
+  const rif = S.ultimoGiornoAttivo || S.creato || oggi;
+  let malus=0, giorniMalus=0, d=S.ultimoCheck||oggi;
+  let guardia=0;
+  while(d!==oggi && guardia++<800){
+    d=addDays(d,1);
+    const inattivo=daysBetweenKeys(rif, d);
+    if(inattivo > BAL.malusDopoGiorni){
+      malus += BAL.malusKgGiorno; giorniMalus++;
+    }
+  }
+  malus=Math.min(malus, 3);           // il malus non affonda mai la partita
+  S.ultimoCheck=oggi;
+
+  // la serie si spezza se è passato più di un giorno
+  if(S.ultimoGiornoAttivo && daysBetweenKeys(S.ultimoGiornoAttivo, oggi)>1) S.streak=0;
+
+  if(malus>0){
+    S.pesoAvatar=r2(S.pesoAvatar+malus);
+    diario('😴', `${giorniMalus} giorni di riposo forzato: ${S.nomeAvatar} ha ripreso peso`, malus, 'up');
+  }
+  segnaStorico(); salva();
+  return malus>0 ? {malus, giorni:daysBetweenKeys(rif,oggi)} : null;
+}
+
+/* --- applica una qualsiasi azione --- */
+function azione({kg=0, xp=0, ico='✨', testo='', tipo='', quiet=false, origine=null}){
+  const oggi=dayKey();
+  if(S.oggi.d!==oggi) S.oggi={d:oggi,kgTolti:0,cibi:0,sfide:[],azioni:0};
+
+  // tetto giornaliero al dimagrimento (niente maratone di tap)
+  let kgEff=kg;
+  if(kg<0){
+    const spazio=Math.max(0, BAL.capKgGiorno - S.oggi.kgTolti);
+    kgEff=-Math.min(-kg, spazio);
+    S.oggi.kgTolti=r2(S.oggi.kgTolti + (-kgEff));
+  }
+  const prima=S.pesoAvatar;
+  S.pesoAvatar=r2(clamp(S.pesoAvatar+kgEff, 45, 200));
+  const deltaVero=r2(S.pesoAvatar-prima);
+
+  const xpPrima=S.xp, lvPrima=livelloDaXp(S.xp);
+  S.xp+=xp;
+  const lvDopo=livelloDaXp(S.xp);
+
+  S.contatori.azioni++; S.oggi.azioni++;
+  if(kg<0 || tipo==='sgarro'){
+    // qualunque interazione consapevole tiene viva la serie
+    if(S.ultimoGiornoAttivo!==oggi){
+      const g = S.ultimoGiornoAttivo ? daysBetweenKeys(S.ultimoGiornoAttivo,oggi) : 99;
+      S.streak = (g===1)? S.streak+1 : 1;
+      S.recordStreak=Math.max(S.recordStreak||0, S.streak);
+      S.ultimoGiornoAttivo=oggi;
+    }
+  }
+  if(testo) diario(ico, testo, deltaVero, deltaVero>0?'up':'');
+  segnaStorico();
+
+  const nuove=controllaMedaglie();
+  salva();
+
+  if(!quiet) feedback({deltaVero, xp, kgBloccato:(kg<0 && kgEff>kg), origine});
+  if(lvDopo>lvPrima) setTimeout(()=>festaLivello(lvDopo), 500);
+  nuove.forEach((m,i)=>setTimeout(()=>{
+    AU.successo(); toast('🏅 Medaglia: '+m.n,'Guardala nella sezione Analisi','ok');
+  }, 900+i*900));
+
+  render();
+  return {deltaVero, xpDato:xp};
+}
+
+function feedback({deltaVero, xp, kgBloccato, origine}){
+  const p = origine || (avatarHome ? avatarHome.centro() : {x:innerWidth/2, y:innerHeight*0.35});
+  if(deltaVero<0){
+    floaty(r1(deltaVero).toFixed(1)+' kg', p.x, p.y, '#2f9e6f');
+    if(xp) floaty('+'+xp+' XP', p.x+58, p.y+26, '#3d8fd6');
+    FX.burst(p.x, p.y, 30);
+    AU.buono(); vibra(28);
+  }else if(deltaVero>0){
+    floaty('+'+r1(deltaVero).toFixed(1)+' kg', p.x, p.y, '#d97420');
+    AU.cattivo(); vibra([20,50,20]);
+    if(avatarHome) avatarHome.scuoti();
+  }else if(kgBloccato){
+    floaty('+'+xp+' XP', p.x, p.y, '#3d8fd6');
+    AU.pop();
+    toast('Per oggi basta così 💚','Il corpo cambia col riposo, non solo con la fatica','warn');
+  }
+}
+
+function festaLivello(L){
+  const r=rangoPer(L);
+  AU.livello(); vibra([30,60,30,60,60]); FX.pioggia(90);
+  apriSheet(`
+    <h3>🎉 Livello ${L}!</h3>
+    <p>${S.nomeAvatar} è salito di grado.</p>
+    <div class="center" style="font-size:64px;margin:6px 0">${r.ico}</div>
+    <div class="center" style="font-size:22px;font-weight:900;color:var(--green2);margin-bottom:14px">${r.nome}</div>
+    <button class="btn full big" data-close>Continuiamo 💪</button>`);
+}
+
+function controllaMedaglie(){
+  const nuove=[];
+  for(const m of MEDAGLIE){
+    if(S.medaglie.includes(m.id)) continue;
+    let ok=false; try{ ok=m.test(S); }catch(e){}
+    if(ok){ S.medaglie.push(m.id); nuove.push(m); }
+  }
+  return nuove;
+}
+
+function frasiUmore(){
+  const g = S.ultimoGiornoAttivo ? daysBetweenKeys(S.ultimoGiornoAttivo, dayKey()) : 99;
+  if(g===0) return ['Oggi ci siamo dati da fare 💪','Mi sento più leggero, grazie!','Bella giornata, continuiamo così.'][S.oggi.azioni%3];
+  if(g===1) return 'Ieri è andata bene. Oggi che si fa?';
+  if(g===2) return 'Due giorni di divano… la cintura inizia a stringere.';
+  if(g>2 && g<90) return `Sono ${g} giorni che non ci muoviamo. Sto rimettendo su tutto! 😰`;
+  return 'Pronti a partire? Bastano 5 squat.';
+}
+
+/* =========================================================================
+   12. VISTE
+   ========================================================================= */
+let vista='casa';
+let avatarHome=null;      // istanza avatar attualmente a schermo
+const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(){
+  const v=$('#view');
+  avatarHome=null;
+  v.innerHTML = ({casa:vCasa, cibo:vCibo, muovi:vMuovi, analisi:vAnalisi, setup:vSetup}[vista])();
+  ({casa:aCasa, cibo:aCibo, muovi:aMuovi, analisi:aAnalisi, setup:aSetup}[vista])(v);
+  $$('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===vista));
+  const fatte=(S.oggi.sfide||[]).length;
+  const dot=$('#nav button[data-tab="casa"] .dot');
+  if(fatte<3 && !dot){ const el=document.createElement('i'); el.className='dot'; $('#nav button[data-tab="casa"]').appendChild(el); }
+  if(fatte>=3 && dot) dot.remove();
+  aggiornaBottoniAudio();
+}
+
+/* ---------------- barra progresso comune ---------------- */
+function bloccoProgressi(){
+  const persi=r1(BAL.pesoStart-S.pesoAvatar);
+  const tot=BAL.pesoStart-S.obiettivo;
+  const perc=clamp((BAL.pesoStart-S.pesoAvatar)/(tot||1)*100,0,100);
+  const pl=progressoLivello(S.xp), r=rangoPer(pl.L);
+  return `
+  <div class="barlab"><span>Obiettivo ${S.obiettivo} kg</span><b>${persi>=0?'-':'+'}${Math.abs(persi).toFixed(1)} kg</b></div>
+  <div class="bar goal"><span style="width:${perc}%"></span></div>
+  <div class="barlab"><span>${r.ico} ${r.nome} · Liv. ${pl.L}</span><b>${pl.dentro}/${pl.serve} XP</b></div>
+  <div class="bar xp"><span style="width:${pl.perc}%"></span></div>
+  <div class="chips">
+    <span class="chip fire">🔥 <b>${S.streak}</b> giorni di fila</span>
+    <span class="chip">⚡ <b>${S.xp}</b> XP</span>
+    <span class="chip">🏅 <b>${S.medaglie.length}</b>/${MEDAGLIE.length}</span>
+  </div>`;
+}
+
+/* ---------------- CASA ---------------- */
+function vCasa(){
+  const sf=sfideDelGiorno(), fatte=S.oggi.sfide||[];
+  const su = S.pesoAvatar > (S.storico.length>1 ? S.storico[S.storico.length-2].kg : BAL.pesoStart);
+  return `
+  <div class="card hero">
+    <div class="stage">
+      <div class="weightTag${su?' up':''}" id="wTag">${S.pesoAvatar.toFixed(1)}<i>kg</i></div>
+      <div class="avatarName">${esc(S.nomeAvatar)}</div>
+      <div id="avatarWrap"><div id="shadowRing"></div><div id="avHost" style="width:100%;height:100%"></div></div>
+      <div class="moodMsg" id="moodMsg">${esc(frasiUmore())}</div>
+    </div>
+    ${bloccoProgressi()}
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn" data-go="muovi">💪 Muoviti</button>
+      <button class="btn ghost" data-go="cibo">🍎 Cibo</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📜 Sfide di oggi <span class="sp">${fatte.length}/3</span></h2>
+    ${sf.map(s=>{
+      const done=fatte.includes(s.id);
+      return `<div class="q${done?' done':''}" data-sfida="${s.id}">
+        <div class="qi">${s.e}</div>
+        <div class="qb"><b>${esc(s.n)}</b><span>${s.kg.toFixed(2)} kg · +${s.xp} XP</span></div>
+        <div class="tick">✓</div></div>`;
+    }).join('')}
+    ${fatte.length>=3?'<div class="center" style="margin-top:8px;font-weight:800;color:var(--green2)">Tris completato! 🎊</div>':''}
+  </div>
+
+  <div class="card">
+    <h2>💡 Lo sapevi che…</h2>
+    ${cartaCuriosita(curiositaDelGiorno())}
+  </div>
+
+  ${S.diario.length? `<div class="card"><h2>📖 Ultime mosse</h2>${S.diario.slice(0,5).map(rigaDiario).join('')}
+    <button class="btn ghost sm full" style="margin-top:10px" data-go="analisi">Vedi tutto lo storico</button></div>`:''}
+  `;
+}
+function aCasa(v){
+  avatarHome=AvatarView($('#avHost',v));
+  avatarHome.set(fattorePancia(S.pesoAvatar), umore(), false);
+  avatarHome.respira(true);
+  $$('[data-go]',v).forEach(b=>b.onclick=()=>vai(b.dataset.go));
+  $$('[data-sfida]',v).forEach(el=>el.onclick=()=>completaSfida(el.dataset.sfida, el));
+  $('#avatarWrap',v).onclick=()=>{ AU.pop(); avatarHome.salta();
+    $('#moodMsg',v).textContent=frasiUmore(); };
+}
+
+function completaSfida(id, el){
+  const s=SFIDE.find(x=>x.id===id); if(!s) return;
+  if((S.oggi.sfide||[]).includes(id)){
+    toast('Già fatta oggi 👍','Ti aspetta domani con una nuova sfida','warn'); return;
+  }
+  S.oggi.sfide=[...(S.oggi.sfide||[]), id];
+  S.contatori.sfide++;
+  const r=el.getBoundingClientRect();
+  azione({kg:s.kg, xp:s.xp, ico:s.e, testo:'Sfida: '+s.n, tipo:'sfida',
+    origine:{x:r.left+r.width/2, y:r.top}});
+  if((S.oggi.sfide||[]).length===3){
+    setTimeout(()=>{ FX.pioggia(80); AU.successo();
+      azione({kg:-0.2, xp:40, ico:'🎊', testo:'Tris di sfide completato!', quiet:true}); },600);
+  }
+}
+
+/* ---------------- CIBO ---------------- */
+function vCibo(){
+  const buoni=CIBI.filter(c=>c.buono), cattivi=CIBI.filter(c=>!c.buono);
+  return `
+  <div class="card hero sticky" style="padding:10px 14px 12px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div id="avatarWrap" style="width:132px;height:166px;flex:0 0 auto">
+        <div id="shadowRing"></div><div id="avHost" style="width:100%;height:100%"></div></div>
+      <div style="flex:1;min-width:0;text-align:center">
+        <div class="weightTag" id="wTag" style="font-size:21px;padding:3px 12px">${S.pesoAvatar.toFixed(1)}<i>kg</i></div>
+        <div class="avatarName">${esc(S.nomeAvatar)}</div>
+        <div class="moodMsg" id="moodMsg" style="margin-top:6px">Trascina qui il cibo 👈</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🥗 Cibi amici <span class="sp">trascinali sull'avatar</span></h2>
+    <div class="foodgrid">
+      ${buoni.map(c=>`<div class="food" data-cibo="${c.id}"><span class="fe">${c.e}</span><span class="fn">${esc(c.n)}</span></div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🍟 Tentazioni <span class="sp">due strade</span></h2>
+    <div class="foodgrid">
+      ${cattivi.map(c=>`<div class="food bad" data-cibo="${c.id}"><span class="fe">${c.e}</span><span class="fn">${esc(c.n)}</span></div>`).join('')}
+    </div>
+    <div class="trash" id="trash">🗑️ Trascina qui per dire «ho resistito!»<br><small style="font-weight:700;opacity:.75">−0,22 kg e +26 XP a tentazione battuta</small></div>
+    <div class="legend">
+      <b>Sull'avatar</b> = «l'ho mangiato davvero». I cibi sani lo alleggeriscono, gli sgarri lo appesantiscono un po'.<br>
+      <b>Nel cestino</b> = «ho resistito». È la mossa che vale di più.<br>
+      Registrare uno sgarro non è una sconfitta: l'onestà dà comunque XP.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🍽️ Oggi <span class="sp">${S.oggi.cibi||0} registrazioni</span></h2>
+    ${S.diario.filter(d=>d.t>new Date(dayKey()+'T00:00:00').getTime()).slice(0,8).map(rigaDiario).join('')
+      || '<div class="sub" style="margin:0">Ancora niente per oggi. Comincia con un bicchiere d\'acqua 💧</div>'}
+  </div>
+  <div style="height:90px"></div>`;
+}
+function aCibo(v){
+  avatarHome=AvatarView($('#avHost',v));
+  avatarHome.set(fattorePancia(S.pesoAvatar), umore(), false);
+  avatarHome.respira(true);
+  abilitaTrascinamento(v);
+}
+
+/* --- trascinamento cibo (funziona con dito e con mouse) --- */
+function abilitaTrascinamento(root){
+  const wrap=$('#avatarWrap',root), trash=$('#trash',root), ring=$('#shadowRing',root);
+  $$('.food',root).forEach(el=>{
+    let ghost=null, sx=0, sy=0, dragging=false, pid=null;
+    const dentro=(r,x,y)=>x>=r.left-10&&x<=r.right+10&&y>=r.top-10&&y<=r.bottom+10;
+    const evidenzia=(x,y)=>{
+      const a=wrap&&dentro(wrap.getBoundingClientRect(),x,y);
+      const t=trash&&dentro(trash.getBoundingClientRect(),x,y);
+      wrap&&wrap.classList.toggle('dropready',!!a);
+      trash&&trash.classList.toggle('ready',!!t);
+      return {a,t};
+    };
+    el.addEventListener('pointerdown',(e)=>{
+      pid=e.pointerId; sx=e.clientX; sy=e.clientY; dragging=false;
+      el.setPointerCapture(pid);
+    });
+    el.addEventListener('pointermove',(e)=>{
+      if(pid!==e.pointerId) return;
+      if(!dragging){
+        if(Math.hypot(e.clientX-sx,e.clientY-sy)<9) return;
+        dragging=true; el.classList.add('drag');
+        ghost=document.createElement('div');
+        ghost.className='ghost-food'; ghost.textContent=$('.fe',el).textContent;
+        document.body.appendChild(ghost); AU.swoosh();
+      }
+      ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px';
+      evidenzia(e.clientX,e.clientY);
+      e.preventDefault();
+    },{passive:false});
+    const fine=(e)=>{
+      if(pid!==e.pointerId) return;
+      try{ el.releasePointerCapture(pid); }catch(err){}
+      pid=null;
+      const cibo=CIBI.find(c=>c.id===el.dataset.cibo);
+      if(!dragging){ scegliCibo(cibo, el.getBoundingClientRect()); return; }
+      dragging=false; el.classList.remove('drag');
+      const {a,t}=evidenzia(e.clientX,e.clientY);
+      wrap&&wrap.classList.remove('dropready'); trash&&trash.classList.remove('ready');
+      if(ghost){ ghost.style.opacity='0'; const g=ghost; setTimeout(()=>g.remove(),200); ghost=null; }
+      const punto={x:e.clientX,y:e.clientY};
+      if(a) mangia(cibo, punto);
+      else if(t) resisti(cibo, punto);
+      else AU.pop();
+    };
+    el.addEventListener('pointerup',fine);
+    el.addEventListener('pointercancel',fine);
+  });
+}
+
+function scegliCibo(c, r){
+  apriSheet(`
+    <h3>${c.e} ${esc(c.n)}</h3>
+    <p>${esc(c.msg)}</p>
+    <div class="btnrow">
+      <button class="btn${c.buono?'':' orange'}" data-act="mangia">L'ho mangiato</button>
+      ${c.buono?'':'<button class="btn" data-act="resisti">Ho resistito 🛡️</button>'}
+    </div>
+    <button class="btn ghost full" style="margin-top:10px" data-close>Annulla</button>`,
+    (sheet)=>{
+      const p={x:innerWidth/2, y:innerHeight*0.4};
+      $('[data-act="mangia"]',sheet).onclick=()=>{ chiudiSheet(); mangia(c,p); };
+      const rr=$('[data-act="resisti"]',sheet); if(rr) rr.onclick=()=>{ chiudiSheet(); resisti(c,p); };
+    });
+}
+
+function mangia(c, punto){
+  if(c.buono){
+    if((S.oggi.cibi||0) >= BAL.maxCibiGiorno){
+      toast('Registrazioni finite per oggi','Il conteggio riparte domani a mezzanotte','warn'); AU.pop(); return;
+    }
+    S.oggi.cibi=(S.oggi.cibi||0)+1; S.contatori.sane++;
+    avatarHome&&avatarHome.salta();
+    azione({kg:c.kg, xp:c.xp, ico:c.e, testo:'Mangiato: '+c.n, tipo:'sano', origine:punto});
+    setTimeout(()=>toast(c.e+' '+c.n, c.msg,'ok'),120);
+  }else{
+    S.oggi.cibi=(S.oggi.cibi||0)+1; S.contatori.sgarri++;
+    avatarHome&&avatarHome.scuoti();
+    azione({kg:c.kg, xp:c.xp, ico:c.e, testo:'Sgarro registrato: '+c.n, tipo:'sgarro', origine:punto});
+    setTimeout(()=>toast('Registrato con onestà 👍','Sapere è metà del lavoro. Domani si recupera.','warn'),120);
+  }
+}
+function resisti(c, punto){
+  S.contatori.evitate++;
+  avatarHome&&avatarHome.salta();
+  FX.scintille(punto.x, punto.y, 22, '#f0b93b');
+  azione({kg:EVITA_KG, xp:EVITA_XP, ico:'🛡️', testo:'Tentazione battuta: '+c.n, tipo:'evitata', origine:punto});
+  setTimeout(()=>toast('Tentazione battuta! 🛡️','La forza di volontà è un muscolo: si allena.','ok'),120);
+}
+
+/* ---------------- MUOVI ---------------- */
+function vMuovi(){
+  return `
+  <div class="card">
+    <h2>💪 Muoviti con ${esc(S.nomeAvatar)}</h2>
+    <div class="sub">Scegli un esercizio: l'app ti guida col ritmo e conta per te. Se un giorno non te la senti, fai la versione corta — vale comunque.</div>
+    <button class="btn full big" id="lampo">⚡ Allenamento lampo (3 minuti)</button>
+  </div>
+  <div class="card">
+    <h2>🏃 Esercizi</h2>
+    ${ESERCIZI.map(x=>`
+      <div class="ex" data-ex="${x.id}">
+        <div class="xi">${x.e}</div>
+        <div class="xb"><b>${esc(x.n)}</b>
+          <div class="tags">
+            <span class="tag d${x.diff}">${DIFF_LAB[x.diff]}</span>
+            <span class="tag">${x.tipo==='reps'? x.reps+' ripetizioni' : (x.sec>=60? (x.sec/60)+' min' : x.sec+' sec')}</span>
+            <span class="tag kg">${x.kg.toFixed(2)} kg</span>
+            <span class="tag">+${x.xp} XP</span>
+          </div>
+        </div>
+        <button class="btn sm">Via</button>
+      </div>`).join('')}
+  </div>
+  <div class="card">
+    <h2>🩺 Prima di iniziare</h2>
+    <div class="legend" style="margin-top:0">
+      Muoviti sempre entro i tuoi limiti: se senti dolore al petto, capogiri o affanno eccessivo, <b>fermati</b>.
+      Se hai problemi di cuore, pressione, schiena o ginocchia, fatti dare l'ok dal tuo medico prima di aumentare.
+      Meglio poco tutti i giorni che tanto una volta al mese.
+    </div>
+  </div>`;
+}
+function aMuovi(v){
+  $$('[data-ex]',v).forEach(el=>el.onclick=()=>{
+    const x=ESERCIZI.find(e=>e.id===el.dataset.ex); apriEsercizio(x);
+  });
+  $('#lampo',v).onclick=()=>{
+    const scelti=[ESERCIZI[0], ESERCIZI[4], ESERCIZI[1]];
+    apriSheet(`<h3>⚡ Allenamento lampo</h3>
+      <p>Tre esercizi di fila, circa 3 minuti in tutto. Puoi fermarti quando vuoi.</p>
+      ${scelti.map(s=>`<div class="q"><div class="qi">${s.e}</div><div class="qb"><b>${esc(s.n)}</b>
+        <span>${s.tipo==='reps'? s.reps+' ripetizioni':(s.sec+' secondi')}</span></div></div>`).join('')}
+      <button class="btn full big" style="margin-top:12px" id="goLampo">Iniziamo 🔥</button>
+      <button class="btn ghost full" style="margin-top:8px" data-close>Un'altra volta</button>`,
+      (sh)=>{ $('#goLampo',sh).onclick=()=>{ chiudiSheet(); catenaEsercizi(scelti); }; });
+  };
+}
+function apriEsercizio(x){
+  apriSheet(`
+    <h3>${x.e} ${esc(x.n)}</h3>
+    <p>${esc(x.desc)}</p>
+    <div class="chips" style="margin-bottom:14px">
+      <span class="chip">${x.tipo==='reps'? x.reps+' ripetizioni':(x.sec>=60?(x.sec/60)+' minuti':x.sec+' secondi')}</span>
+      <span class="chip"><b>${x.kg.toFixed(2)} kg</b></span>
+      <span class="chip">+${x.xp} XP</span>
+    </div>
+    <button class="btn full big" id="goEx">Iniziamo 💪</button>
+    <button class="btn ghost full" style="margin-top:8px" data-close>Chiudi</button>`,
+    (sh)=>{ $('#goEx',sh).onclick=()=>{ chiudiSheet(); catenaEsercizi([x]); }; });
+}
+
+/* =========================================================================
+   13. MOTORE ALLENAMENTO (schermo intero, guidato a ritmo)
+   ========================================================================= */
+let W = null;
+function catenaEsercizi(lista){
+  W = {lista, i:0, pausa:false, t:null, av:null, fatti:[]};
+  $('#workout').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  prossimoEsercizio();
+}
+function chiudiAllenamento(){
+  if(W&&W.t) clearInterval(W.t);
+  W=null;
+  $('#workout').classList.add('hidden'); $('#workout').innerHTML='';
+  document.body.style.overflow='';
+  try{ speechSynthesis.cancel(); }catch(e){}
+  render();
+}
+function prossimoEsercizio(){
+  if(!W) return;
+  if(W.i>=W.lista.length) return fineAllenamento();
+  const x=W.lista[W.i];
+  const tot = x.tipo==='reps' ? x.reps : x.sec;
+  const C=741.4;
+  $('#workout').innerHTML=`
+    <h2>${x.e} ${esc(x.n)}</h2>
+    <div class="wsub">${W.lista.length>1? `Esercizio ${W.i+1} di ${W.lista.length} · `:''}${x.tipo==='reps'? x.reps+' ripetizioni':(x.sec>=60?(x.sec/60)+' minuti':x.sec+' secondi')}</div>
+    <div class="ring">
+      <svg viewBox="0 0 250 250">
+        <circle cx="125" cy="125" r="118" fill="none" stroke="#dbeae2" stroke-width="12"/>
+        <circle id="wRing" cx="125" cy="125" r="118" fill="none" stroke="#2f9e6f" stroke-width="12"
+          stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+      </svg>
+      <div class="rtxt"><div id="wAvatar"></div></div>
+    </div>
+    <div class="bignum${x.tipo==='time'&&x.sec>=60?' small':''}" id="wNum">3</div>
+    <div class="wcue" id="wCue">PRONTI</div>
+    <div class="btnrow" style="width:100%;max-width:340px;margin-top:16px">
+      <button class="btn ghost" id="wPause">⏸ Pausa</button>
+      <button class="btn red" id="wStop">Ho finito</button>
+    </div>`;
+  W.av=AvatarView($('#wAvatar'));
+  W.av.set(fattorePancia(S.pesoAvatar), 0.6, false);
+  W.av.respira(true);
+  $('#wPause').onclick=()=>{
+    W.pausa=!W.pausa;
+    $('#wPause').textContent = W.pausa? '▶️ Riprendi' : '⏸ Pausa';
+  };
+  $('#wStop').onclick=()=>interrompi(x);
+  countdown(x, tot, C);
+}
+
+function countdown(x, tot, C){
+  let n=3;
+  $('#wNum').textContent=n; $('#wCue').textContent='PRONTI';
+  AU.tic(); parla('Pronti');
+  W.t=setInterval(()=>{
+    if(!W) return;
+    if(W.pausa) return;
+    n--;
+    if(n>0){ $('#wNum').textContent=n; AU.tic(); $('#wNum').classList.remove('pulse'); void $('#wNum').offsetWidth; $('#wNum').classList.add('pulse'); }
+    else{ clearInterval(W.t); $('#wCue').textContent='VIA!'; AU.via(); parla('Via'); vibra(40);
+      setTimeout(()=>eseguiEsercizio(x,tot,C), 500); }
+  },800);
+}
+
+function eseguiEsercizio(x, tot, C){
+  if(!W) return;
+  let fatte=0, fase=0, elapsed=0;
+  const ring=$('#wRing'), num=$('#wNum'), cue=$('#wCue');
+  const passo=100;
+  if(x.tipo==='reps'){
+    const mezzo=(x.tempo*1000)/2;
+    num.textContent='0';
+    let tFase=0;
+    W.av.squat(true, mezzo); cue.textContent=x.cue[0]; AU.toc();
+    W.t=setInterval(()=>{
+      if(!W||W.pausa) return;
+      tFase+=passo;
+      if(tFase>=mezzo){
+        tFase=0; fase^=1;
+        W.av.squat(fase===0, mezzo);
+        cue.textContent=x.cue[fase%x.cue.length]||x.cue[0];
+        AU.toc();
+        if(fase===0){
+          fatte++;
+          num.textContent=fatte;
+          num.classList.remove('pulse'); void num.offsetWidth; num.classList.add('pulse');
+          AU.pop(); vibra(18); parla(String(fatte));
+          if(fatte%3===0) W.av.sudore();
+          ring.setAttribute('stroke-dashoffset', C*(1-fatte/tot));
+          if(fatte>=tot){ clearInterval(W.t); completa(x, tot, tot); }
+        }
+      }
+    },passo);
+  }else{
+    let restano=x.sec;
+    num.textContent=fmtSec(restano);
+    cue.textContent=x.cue[0];
+    let su=false;
+    W.t=setInterval(()=>{
+      if(!W||W.pausa) return;
+      elapsed+=passo;
+      if(elapsed%600===0){ su=!su; W.av.squat(su, 600); }
+      if(elapsed%1000===0){
+        restano--;
+        num.textContent=fmtSec(restano);
+        ring.setAttribute('stroke-dashoffset', C*(restano/x.sec));
+        if(restano<=5&&restano>0){ AU.tic(); num.classList.remove('pulse'); void num.offsetWidth; num.classList.add('pulse'); }
+        else if(restano%15===0&&restano>0){ AU.toc(); }
+        if(restano<=0){ clearInterval(W.t); completa(x, x.sec, x.sec); }
+      }
+    },passo);
+  }
+}
+function fmtSec(s){ return s>=60 ? Math.floor(s/60)+':'+String(s%60).padStart(2,'0') : String(s); }
+
+function interrompi(x){
+  if(W&&W.t) clearInterval(W.t);
+  const tot = x.tipo==='reps'? x.reps : x.sec;
+  const fattoOra = x.tipo==='reps' ? Number($('#wNum').textContent)||0 : tot-(Number(String($('#wNum').textContent).split(':').reduce((a,b)=>a*60+Number(b),0))||0);
+  apriSheet(`
+    <h3>Quanto hai fatto?</h3>
+    <p>Nessun giudizio: conta quello che hai davvero fatto. Anche metà vale.</p>
+    <div class="field"><label>${x.tipo==='reps'?'Ripetizioni':'Secondi'} completati</label>
+      <input type="number" id="qFatto" value="${clamp(Math.round(fattoOra),0,tot)}" min="0" max="${tot}" inputmode="numeric"></div>
+    <button class="btn full big" id="qOk">Registra</button>`,
+    (sh)=>{
+      $('#qOk',sh).onclick=()=>{
+        const q=clamp(Number($('#qFatto',sh).value)||0, 0, tot);
+        chiudiSheet(); completa(x, q, tot);
+      };
+    }, true);
+}
+
+function completa(x, fatte, tot){
+  const frac = tot? clamp(fatte/tot,0,1) : 0;
+  if(frac<=0){
+    toast('Nessun problema 💚','Anche solo aprire l\'app conta. Riprova quando te la senti.','warn');
+    W.i++; setTimeout(()=>W? prossimoEsercizio():null, 400); return;
+  }
+  FX.pioggia(frac>=1?70:40); AU.successo(); vibra([30,50,60]);
+  W.av && W.av.salta();
+  W.fatti.push({x, fatte, frac});
+  const durata = x.tipo==='reps'? (x.reps*x.tempo)/60 : x.sec/60;
+  S.contatori.esercizi++;
+  S.contatori.reps += (x.tipo==='reps'? Math.round(fatte):0);
+  S.contatori.minuti += Math.round(durata*frac);
+  azione({
+    kg: x.kg*Math.max(frac,0.35), xp: Math.round(x.xp*Math.max(frac,0.35)),
+    ico:x.e, testo:`${x.n}: ${Math.round(fatte)}${x.tipo==='reps'?' ripetizioni':' sec'}`,
+    tipo:'esercizio', quiet:true
+  });
+  const num=$('#wNum'), cue=$('#wCue');
+  if(cue) cue.textContent = frac>=1? 'FATTO! 🎉' : 'BRAVO!';
+  if(num) num.textContent = '✓';
+  parla(frac>=1? 'Bravo, completato!' : 'Bravo!');
+  W.i++;
+  setTimeout(()=>{ if(!W) return; W.i<W.lista.length? prossimoEsercizio() : fineAllenamento(); }, 1600);
+}
+
+function fineAllenamento(){
+  const fatti=W?W.fatti:[];
+  const kg=fatti.reduce((a,f)=>a+f.x.kg*Math.max(f.frac,0.35),0);
+  const xp=fatti.reduce((a,f)=>a+Math.round(f.x.xp*Math.max(f.frac,0.35)),0);
+  $('#workout').innerHTML=`
+    <div style="font-size:72px">🎉</div>
+    <h2>Allenamento finito!</h2>
+    <div class="wsub" style="margin-bottom:16px">${esc(S.nomeAvatar)} ti ringrazia.</div>
+    <div class="tiles" style="width:100%;max-width:360px">
+      <div class="tile"><b>${fatti.length}</b><span>esercizi</span></div>
+      <div class="tile v"><b>${r1(kg).toFixed(1)}</b><span>kg avatar</span></div>
+      <div class="tile b"><b>+${xp}</b><span>XP</span></div>
+    </div>
+    <div style="font-size:34px;font-weight:900;color:var(--green2);margin-top:18px">${S.pesoAvatar.toFixed(1)} kg</div>
+    <button class="btn big" style="margin-top:18px;min-width:220px" id="wClose">Torna a casa</button>`;
+  FX.pioggia(110); AU.livello();
+  $('#wClose').onclick=chiudiAllenamento;
+  salva();
+}
+
+/* =========================================================================
+   14. ANALISI E CURIOSITÀ
+   ========================================================================= */
+function rigaDiario(d){
+  const t=new Date(d.t);
+  const q = d.kg? (d.kg>0? '+'+d.kg.toFixed(2) : d.kg.toFixed(2))+' kg' : '';
+  return `<div class="log"><div class="le">${d.e}</div>
+    <div class="lb">${esc(d.x)}<time>${t.toLocaleDateString('it-IT',{day:'numeric',month:'short'})} · ${t.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</time></div>
+    ${q?`<div class="lk ${d.c==='up'?'up':''}">${q}</div>`:''}</div>`;
+}
+function cartaCuriosita(c){
+  return `<div class="fact"><div class="fcat">${esc(c.cat)}</div><h4>${esc(c.t)}</h4><p>${esc(c.c)}</p></div>`;
+}
+
+function grafico(punti, colore){
+  if(!punti || punti.length<2)
+    return '<div class="sub" style="margin:0">Servono almeno due misurazioni per disegnare la linea.</div>';
+  const p=punti.slice(-30);
+  const W=100, H=100, pad=6;
+  const vals=p.map(x=>x.kg);
+  let min=Math.min(...vals), max=Math.max(...vals);
+  if(max-min<1){ const m=(max+min)/2; min=m-0.5; max=m+0.5; }
+  const X=i=>pad + i*(W-pad*2)/(p.length-1);
+  const Y=v=>pad + (max-v)/(max-min)*(H-pad*2);
+  const d=p.map((x,i)=>(i?'L':'M')+X(i).toFixed(2)+' '+Y(x.kg).toFixed(2)).join(' ');
+  const area=d+` L ${X(p.length-1).toFixed(2)} ${H} L ${X(0).toFixed(2)} ${H} Z`;
+  const gid='g'+(++uid);
+  return `<svg class="chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${colore}" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="${colore}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${d}" fill="none" stroke="${colore}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"
+      vector-effect="non-scaling-stroke"/>
+    <circle cx="${X(p.length-1).toFixed(2)}" cy="${Y(p[p.length-1].kg).toFixed(2)}" r="2.4" fill="${colore}"/>
+  </svg>
+  <div class="barlab" style="margin:4px 0 0"><span>${fmtDate(p[0].d)} · ${p[0].kg.toFixed(1)} kg</span>
+    <b>${fmtDate(p[p.length-1].d)} · ${p[p.length-1].kg.toFixed(1)} kg</b></div>`;
+}
+
+function bmiInfo(){
+  const ult=S.pesiReali[S.pesiReali.length-1];
+  if(!ult || !S.altezza) return null;
+  const h=S.altezza/100, b=ult.kg/(h*h);
+  let lab='Normopeso', col='var(--green2)';
+  if(b<18.5){ lab='Sottopeso'; col='var(--blue)'; }
+  else if(b<25){ lab='Normopeso'; col='var(--green2)'; }
+  else if(b<30){ lab='Sovrappeso'; col='var(--orange2)'; }
+  else { lab='Obesità'; col='var(--red)'; }
+  return {bmi:b, lab, col, kg:ult.kg};
+}
+
+function vAnalisi(){
+  const persi=r1(BAL.pesoStart-S.pesoAvatar);
+  const giorni=daysBetweenKeys(S.creato||dayKey(), dayKey())+1;
+  const c=S.contatori;
+  const kcal=Math.round(c.minuti*4.5 + c.esercizi*12);
+  const b=bmiInfo();
+  const reali=S.pesiReali.map(p=>({d:p.d, kg:p.kg}));
+  const diffReale = reali.length>1 ? r1(reali[reali.length-1].kg-reali[0].kg) : null;
+  return `
+  <div class="card">
+    <h2>📈 Il viaggio di ${esc(S.nomeAvatar)} <span class="sp">ultimi 30 giorni</span></h2>
+    ${grafico(S.storico,'#2f9e6f')}
+    <div class="tiles" style="margin-top:14px">
+      <div class="tile${persi<0?' o':''}"><b>${persi>=0?'-':'+'}${Math.abs(persi).toFixed(1)}</b><span>kg ${persi>=0?'persi':'ripresi'}</span></div>
+      <div class="tile o"><b>${S.streak}</b><span>giorni di fila</span></div>
+      <div class="tile b"><b>${giorni}</b><span>giorni di gioco</span></div>
+      <div class="tile v"><b>${S.xp}</b><span>XP totali</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💪 Cosa hai fatto davvero</h2>
+    <div class="tiles">
+      <div class="tile"><b>${c.esercizi}</b><span>esercizi</span></div>
+      <div class="tile"><b>${c.reps}</b><span>ripetizioni</span></div>
+      <div class="tile b"><b>${c.minuti}</b><span>minuti attivi</span></div>
+      <div class="tile"><b>${c.sane}</b><span>scelte sane</span></div>
+      <div class="tile o"><b>${c.evitate}</b><span>tentazioni battute</span></div>
+      <div class="tile v"><b>${c.sfide}</b><span>sfide vinte</span></div>
+      <div class="tile o"><b>${c.sgarri}</b><span>sgarri onesti</span></div>
+      <div class="tile"><b>~${kcal}</b><span>kcal bruciate stimate</span></div>
+    </div>
+    <div class="legend">Le calorie sono una stima indicativa, non una misura clinica.</div>
+  </div>
+
+  <div class="card">
+    <h2>⚖️ Il tuo peso vero <span class="sp">${reali.length} misurazioni</span></h2>
+    <div class="sub">Il peso di ${esc(S.nomeAvatar)} è un gioco e corre più veloce del tuo. Qui invece segni la realtà: pesati una volta a settimana, sempre lo stesso giorno, appena sveglio.</div>
+    ${reali.length? grafico(reali,'#3d8fd6') : '<div class="sub" style="margin:0">Non hai ancora registrato nessun peso.</div>'}
+    ${diffReale!==null? `<div class="chips"><span class="chip">Dal primo giorno: <b>${diffReale>0?'+':''}${diffReale.toFixed(1)} kg</b></span></div>`:''}
+    ${b? `<div class="chips"><span class="chip">BMI <b>${b.bmi.toFixed(1)}</b></span>
+      <span class="chip" style="color:${b.col}"><b style="color:${b.col}">${b.lab}</b></span></div>`:''}
+    <button class="btn full" style="margin-top:12px" id="addPeso">➕ Registra il peso di oggi</button>
+    ${!S.altezza?'<div class="legend">Aggiungi la tua altezza in Setup per vedere anche il BMI.</div>':''}
+  </div>
+
+  <div class="card">
+    <h2>🏅 Medaglie <span class="sp">${S.medaglie.length}/${MEDAGLIE.length}</span></h2>
+    <div class="medals">
+      ${MEDAGLIE.map(m=>`<div class="medal${S.medaglie.includes(m.id)?' on':''}">
+        <span class="me">${m.e}</span><span class="mn">${esc(m.n)}</span></div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💡 Curiosità del giorno</h2>
+    ${cartaCuriosita(curiositaDelGiorno())}
+    <button class="btn ghost full" id="altraCuriosita">🎲 Raccontamene un'altra</button>
+    <div id="extraCuriosita" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>📖 Diario completo <span class="sp">${S.diario.length} voci</span></h2>
+    ${S.diario.length? S.diario.slice(0,60).map(rigaDiario).join('') : '<div class="sub" style="margin:0">Ancora vuoto.</div>'}
+  </div>`;
+}
+function aAnalisi(v){
+  $('#addPeso',v).onclick=()=>{
+    const ult=S.pesiReali[S.pesiReali.length-1];
+    apriSheet(`
+      <h3>⚖️ Peso di oggi</h3>
+      <p>Appena sveglio, a stomaco vuoto, sempre con la stessa bilancia.</p>
+      <div class="field"><label>Peso in kg</label>
+        <input type="number" step="0.1" id="pv" inputmode="decimal" value="${ult?ult.kg:''}" placeholder="es. 98.5"></div>
+      <button class="btn full big" id="pvOk">Salva</button>
+      <div class="hint">Ricorda: il peso oscilla di 1-2 kg al giorno per acqua e sale. Guarda la tendenza, non il singolo numero.</div>`,
+      (sh)=>{
+        $('#pvOk',sh).onclick=()=>{
+          const kg=Number($('#pv',sh).value);
+          if(!kg||kg<30||kg>300){ toast('Numero non valido','Inserisci un peso tra 30 e 300 kg','bad'); return; }
+          const k=dayKey(), ex=S.pesiReali.find(p=>p.d===k);
+          if(ex) ex.kg=r1(kg); else S.pesiReali.push({d:k, kg:r1(kg)});
+          S.pesiReali.sort((a,b)=>a.d<b.d?-1:1);
+          salva(); chiudiSheet(); AU.buono(); FX.burst(innerWidth/2, innerHeight*0.4, 24);
+          toast('Peso registrato ⚖️','Bravo: misurare è già metà del cambiamento','ok');
+          render();
+        };
+      });
+  };
+  $('#altraCuriosita',v).onclick=()=>{
+    const c=CURIOSITA[Math.floor(Math.random()*CURIOSITA.length)];
+    $('#extraCuriosita',v).innerHTML=cartaCuriosita(c);
+    AU.pop();
+  };
+}
+
+/* =========================================================================
+   15. SETUP
+   ========================================================================= */
+function vSetup(){
+  return `
+  <div class="card">
+    <h2>🧍 Il tuo avatar</h2>
+    <div class="field"><label>Come si chiama</label>
+      <input id="fNome" value="${esc(S.nomeAvatar)}" maxlength="16"></div>
+    <div class="field"><label>Capelli</label>
+      <select id="fCapelli">
+        <option value="grigi">Grigi</option><option value="castani">Castani</option>
+        <option value="bianchi">Bianchi</option><option value="calvo">Senza capelli</option>
+      </select></div>
+    <div class="field"><label>Baffi</label>
+      <select id="fBaffi"><option value="1">Sì, con baffi</option><option value="0">No, sbarbato</option></select></div>
+    <div class="field"><label>Obiettivo dell'avatar (kg)</label>
+      <input type="number" id="fObiettivo" value="${S.obiettivo}" min="55" max="99" inputmode="numeric"></div>
+    <div class="hint">L'avatar parte sempre da ${BAL.pesoStart} kg: è un personaggio, non la tua bilancia. Serve a rendere visibile lo sforzo.</div>
+  </div>
+
+  <div class="card">
+    <h2>👤 Tu</h2>
+    <div class="field"><label>Il tuo nome (facoltativo)</label>
+      <input id="fUtente" value="${esc(S.nomeUtente||'')}" maxlength="20" placeholder="es. Papà"></div>
+    <div class="field"><label>Altezza in cm (serve per il BMI)</label>
+      <input type="number" id="fAltezza" value="${S.altezza||''}" min="120" max="220" inputmode="numeric" placeholder="es. 175"></div>
+    <button class="btn full" id="salvaSetup">💾 Salva</button>
+  </div>
+
+  <div class="card">
+    <h2>🔊 Suoni</h2>
+    <div class="q"><div class="qi">🎵</div><div class="qb"><b>Musica rilassata</b><span>sottofondo generato dal telefono</span></div>
+      <button class="btn sm ${S.audio.musica?'':'ghost'}" data-tog="musica">${S.audio.musica?'ON':'OFF'}</button></div>
+    <div class="q"><div class="qi">🔔</div><div class="qb"><b>Effetti sonori</b><span>conferme, ritmo, festeggiamenti</span></div>
+      <button class="btn sm ${S.audio.sfx?'':'ghost'}" data-tog="sfx">${S.audio.sfx?'ON':'OFF'}</button></div>
+    <div class="q"><div class="qi">🗣️</div><div class="qb"><b>Voce che conta</b><span>durante gli esercizi</span></div>
+      <button class="btn sm ${S.audio.voce?'':'ghost'}" data-tog="voce">${S.audio.voce?'ON':'OFF'}</button></div>
+  </div>
+
+  <div class="card">
+    <h2>💾 Backup dei progressi</h2>
+    <div class="sub">Tutto è salvato <b>solo su questo telefono</b>. Se cambi telefono o cancelli i dati del browser, i progressi si perdono: esporta ogni tanto un backup.</div>
+    <div class="btnrow">
+      <button class="btn ghost" id="esporta">⬇️ Esporta</button>
+      <button class="btn ghost" id="importa">⬆️ Importa</button>
+    </div>
+    <input type="file" id="fileIn" accept="application/json,.json" class="hidden">
+  </div>
+
+  <div class="card">
+    <h2>📱 Installare l'app</h2>
+    <div class="legend" style="margin-top:0">
+      <b>Android (Chrome):</b> menu ⋮ → «Installa app» / «Aggiungi a schermata Home».<br>
+      <b>iPhone (Safari):</b> tasto Condividi <b>⬆️</b> → «Aggiungi a Home».<br>
+      Dopo l'installazione funziona anche senza internet.
+    </div>
+    <button class="btn full" id="installa" style="margin-top:12px">📲 Installa ora</button>
+  </div>
+
+  <div class="card">
+    <h2>🔒 Privacy</h2>
+    <div class="legend" style="margin-top:0">
+      Nessun account, nessuna registrazione, nessun dato inviato su internet.
+      Tutto resta nella memoria del browser di <b>questo</b> dispositivo. Chi installa l'app su un altro telefono
+      ha una partita completamente separata.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚠️ Zona rossa</h2>
+    <button class="btn red full" id="azzera">🗑️ Ricomincia da capo</button>
+    <div class="legend">Riporta l'avatar a ${BAL.pesoStart} kg e cancella diario, XP e medaglie.</div>
+  </div>
+  <div class="center" style="color:var(--muted);font-size:12px;margin-bottom:10px">Forma Quest v1.0 · fatto con affetto</div>`;
+}
+function aSetup(v){
+  $('#fCapelli',v).value=(S.look&&S.look.capelli)||'grigi';
+  $('#fBaffi',v).value=(S.look&&S.look.baffi)?'1':'0';
+  $('#salvaSetup',v).onclick=()=>{
+    S.nomeAvatar=($('#fNome',v).value||'Bruno').trim().slice(0,16);
+    S.nomeUtente=($('#fUtente',v).value||'').trim().slice(0,20);
+    S.look={capelli:$('#fCapelli',v).value, baffi:$('#fBaffi',v).value==='1'};
+    const ob=clamp(Number($('#fObiettivo',v).value)||BAL.obiettivoDefault, 55, 99);
+    S.obiettivo=ob;
+    S.altezza=clamp(Number($('#fAltezza',v).value)||0, 0, 250);
+    salva(); AU.buono(); toast('Salvato ✅','','ok'); render();
+  };
+  $$('[data-tog]',v).forEach(b=>b.onclick=()=>{
+    const k=b.dataset.tog; S.audio[k]=!S.audio[k]; salva();
+    if(k==='musica') S.audio.musica? AU.musicaOn() : AU.musicaOff();
+    if(k==='sfx'&&S.audio.sfx) AU.buono();
+    render();
+  });
+  $('#esporta',v).onclick=()=>{
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='forma-quest-backup-'+dayKey()+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    toast('Backup scaricato 💾','Salvalo in una mail o su Drive','ok');
+  };
+  $('#importa',v).onclick=()=>$('#fileIn',v).click();
+  $('#fileIn',v).onchange=(e)=>{
+    const f=e.target.files[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload=()=>{
+      try{
+        const d=JSON.parse(rd.result);
+        if(!d || typeof d.pesoAvatar!=='number') throw 0;
+        S=d;
+        const base=statoNuovo(); for(const k in base) if(S[k]===undefined) S[k]=base[k];
+        salva(); toast('Backup ripristinato ✅','','ok'); vai('casa');
+      }catch(err){ toast('File non valido','Serve un backup di Forma Quest','bad'); }
+    };
+    rd.readAsText(f);
+  };
+  $('#installa',v).onclick=async()=>{
+    if(promptInstall){ promptInstall.prompt(); const r=await promptInstall.userChoice;
+      if(r.outcome==='accepted') toast('Installata! 🎉','La trovi tra le app','ok'); promptInstall=null; }
+    else apriSheet(`<h3>📲 Aggiungi alla Home</h3>
+      <p>Il tuo browser non offre il pulsante automatico. Fai così:</p>
+      <div class="legend" style="font-size:15px">
+        <b>iPhone / iPad (Safari):</b> tocca il tasto <b>Condividi ⬆️</b> in basso, poi <b>«Aggiungi alla schermata Home»</b>.<br><br>
+        <b>Android (Chrome):</b> tocca il menu <b>⋮</b> in alto a destra, poi <b>«Installa app»</b>.
+      </div>
+      <button class="btn full big" style="margin-top:14px" data-close>Ho capito</button>`);
+  };
+  $('#azzera',v).onclick=()=>{
+    apriSheet(`<h3>Ricominciare da capo?</h3>
+      <p>Perderai diario, XP, medaglie e il peso dell'avatar tornerà a ${BAL.pesoStart} kg. Non si torna indietro.</p>
+      <button class="btn red full big" id="siAzzera">Sì, cancella tutto</button>
+      <button class="btn ghost full" style="margin-top:8px" data-close>No, annulla</button>`,
+      (sh)=>{ $('#siAzzera',sh).onclick=()=>{
+        const look=S.look, nome=S.nomeAvatar, audio=S.audio;
+        S=statoNuovo(); S.look=look; S.nomeAvatar=nome; S.audio=audio; S.onboarded=true;
+        salva(); chiudiSheet(); vai('casa'); toast('Si riparte da zero 🌱','','ok'); };
+      });
+  };
+}
+
+/* =========================================================================
+   16. SHEET / MODALI
+   ========================================================================= */
+function apriSheet(html, dopo, sopraTutto=false){
+  const m=$('#modal');
+  m.innerHTML=`<div class="scrim"><div class="sheet"><div class="grab"></div>${html}</div></div>`;
+  if(sopraTutto) $('.scrim',m).style.zIndex='400';
+  const scrim=$('.scrim',m), sheet=$('.sheet',m);
+  scrim.addEventListener('click',(e)=>{ if(e.target===scrim) chiudiSheet(); });
+  $$('[data-close]',sheet).forEach(b=>b.onclick=chiudiSheet);
+  AU.swoosh();
+  dopo&&dopo(sheet);
+}
+function chiudiSheet(){ $('#modal').innerHTML=''; }
+
+function vai(tab){ vista=tab; scrollTo({top:0,behavior:'smooth'}); AU.pop(); render(); }
+
+/* =========================================================================
+   17. PRIMO AVVIO
+   ========================================================================= */
+let passo=0, avIntro=null;
+function mostraIntro(){
+  $('#intro').classList.remove('hidden');
+  $('#app').style.display='none'; $('.nav').style.display='none';
+  disegnaIntro();
+}
+function pallini(){ return `<div class="steps">${[0,1,2,3].map(i=>`<i class="${i===passo?'on':''}"></i>`).join('')}</div>`; }
+function disegnaIntro(){
+  const b=$('#introBody');
+  if(passo===0){
+    b.innerHTML=`${pallini()}
+      <div style="width:190px;height:230px;margin:0 auto"><div id="introAv" style="width:100%;height:100%"></div></div>
+      <h1 class="center">Ciao! Sono il tuo avatar.</h1>
+      <p class="center">Peso <b>100 kg</b> e ho una certa pancetta. Ogni volta che <b>tu</b> fai qualcosa di buono nella vita vera — cinque squat, una mela, una passeggiata — io divento più leggero.</p>
+      <p class="center">E se ti fermi troppo… ricomincio a ingrassare. Quindi conto su di te.</p>
+      <button class="btn full big" id="next">Piacere! 👋</button>`;
+    avIntro=AvatarView($('#introAv')); avIntro.set(1, 0.4, false); avIntro.respira(true);
+  }
+  if(passo===1){
+    b.innerHTML=`${pallini()}
+      <h1>Come mi chiamo?</h1>
+      <p>Dammi un nome: sarà più divertente prendersela con me.</p>
+      <div class="field"><label>Nome</label><input id="iNome" value="${esc(S.nomeAvatar)}" maxlength="16"></div>
+      <div class="field"><label>Capelli</label><select id="iCapelli">
+        <option value="grigi">Grigi</option><option value="castani">Castani</option>
+        <option value="bianchi">Bianchi</option><option value="calvo">Senza capelli</option></select></div>
+      <div class="field"><label>Baffi</label><select id="iBaffi">
+        <option value="1">Sì, con baffi</option><option value="0">No, sbarbato</option></select></div>
+      <div style="width:150px;height:185px;margin:0 auto 10px"><div id="introAv" style="width:100%;height:100%"></div></div>
+      <button class="btn full big" id="next">Avanti</button>`;
+    $('#iCapelli').value=(S.look&&S.look.capelli)||'grigi';
+    $('#iBaffi').value=(S.look&&S.look.baffi)?'1':'0';
+    avIntro=AvatarView($('#introAv')); avIntro.set(1, 0.7, false); avIntro.respira(true);
+    const agg=()=>{ S.look={capelli:$('#iCapelli').value, baffi:$('#iBaffi').value==='1'}; avIntro.mood(0.7); };
+    $('#iCapelli').onchange=agg; $('#iBaffi').onchange=agg;
+  }
+  if(passo===2){
+    b.innerHTML=`${pallini()}
+      <h1>Dove vogliamo arrivare?</h1>
+      <p>Scegli il traguardo del <b>mio</b> peso. Non è il tuo: io sono un gioco, corro più veloce di te. Serve solo a vedere i progressi.</p>
+      <div class="field"><label>Il mio obiettivo (kg)</label>
+        <input type="number" id="iObiettivo" value="${S.obiettivo}" min="55" max="99" inputmode="numeric"></div>
+      <div class="field"><label>La tua altezza in cm — facoltativa, serve per il BMI</label>
+        <input type="number" id="iAltezza" value="${S.altezza||''}" min="120" max="220" inputmode="numeric" placeholder="es. 175"></div>
+      <div class="field"><label>Il tuo peso vero oggi — facoltativo</label>
+        <input type="number" step="0.1" id="iPeso" inputmode="decimal" placeholder="resta solo su questo telefono"></div>
+      <button class="btn full big" id="next">Avanti</button>`;
+  }
+  if(passo===3){
+    b.innerHTML=`${pallini()}
+      <h1>Come si gioca</h1>
+      <div class="q"><div class="qi">💪</div><div class="qb"><b>Muoviti davvero</b><span>L'app conta il ritmo, tu fai gli squat. Poi confermi.</span></div></div>
+      <div class="q"><div class="qi">🍎</div><div class="qb"><b>Trascina il cibo su di me</b><span>Sano = dimagrisco. Sgarro = ingrasso, ma l'onestà premia.</span></div></div>
+      <div class="q"><div class="qi">🗑️</div><div class="qb"><b>Butta le tentazioni</b><span>«Ho resistito» è la mossa che vale di più.</span></div></div>
+      <div class="q"><div class="qi">😴</div><div class="qb"><b>Non sparire</b><span>Dopo 2 giorni fermi ricomincio a mettere su peso.</span></div></div>
+      <div class="q"><div class="qi">💡</div><div class="qb"><b>Impara qualcosa</b><span>Ogni giorno una curiosità vera su corpo e cibo.</span></div></div>
+      <p style="font-size:13px;margin-top:14px">I tuoi dati restano su questo dispositivo: niente account, niente internet.</p>
+      <button class="btn full big" id="next">Cominciamo! 🚀</button>`;
+  }
+  $('#next').onclick=avantiIntro;
+}
+function avantiIntro(){
+  AU.ensure(); AU.pop();
+  if(passo===1){
+    S.nomeAvatar=($('#iNome').value||'Bruno').trim().slice(0,16)||'Bruno';
+    S.look={capelli:$('#iCapelli').value, baffi:$('#iBaffi').value==='1'};
+  }
+  if(passo===2){
+    S.obiettivo=clamp(Number($('#iObiettivo').value)||BAL.obiettivoDefault,55,99);
+    S.altezza=clamp(Number($('#iAltezza').value)||0,0,250);
+    const pv=Number($('#iPeso').value);
+    if(pv>=30&&pv<=300) S.pesiReali=[{d:dayKey(), kg:r1(pv)}];
+  }
+  passo++;
+  if(passo>3){
+    S.onboarded=true; salva();
+    $('#intro').classList.add('hidden'); $('#intro').innerHTML='';
+    $('#app').style.display=''; $('.nav').style.display='';
+    if(S.audio.musica) AU.musicaOn();
+    FX.pioggia(90); AU.livello();
+    render();
+    setTimeout(()=>toast('Benvenuto! 🌱','Comincia con una sfida di oggi','ok'),700);
+    return;
+  }
+  salva(); disegnaIntro();
+}
+
+/* =========================================================================
+   18. AVVIO
+   ========================================================================= */
+let promptInstall=null;
+addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); promptInstall=e; });
+
+function aggiornaBottoniAudio(){
+  const m=$('#btnMusic'), s=$('#btnSfx');
+  if(!m||!s) return;
+  m.classList.toggle('off', !S.audio.musica);
+  s.classList.toggle('off', !S.audio.sfx);
+  m.textContent = S.audio.musica? '🎵':'🔇';
+  s.textContent = S.audio.sfx? '🔊':'🔈';
+}
+
+function avvia(){
+  FX.init();
+  carica();
+  const esito=controlloGiorno();
+
+  $$('#nav button').forEach(b=>b.onclick=()=>vai(b.dataset.tab));
+  $('#btnMusic').onclick=()=>{
+    S.audio.musica=!S.audio.musica; salva();
+    S.audio.musica? AU.musicaOn() : AU.musicaOff();
+    aggiornaBottoniAudio();
+    toast(S.audio.musica?'Musica accesa 🎵':'Musica spenta 🔇','','ok');
+  };
+  $('#btnSfx').onclick=()=>{
+    S.audio.sfx=!S.audio.sfx; salva(); aggiornaBottoniAudio();
+    if(S.audio.sfx) AU.buono();
+  };
+
+  if(!S.onboarded){ mostraIntro(); }
+  else{
+    render();
+    if(esito) setTimeout(()=>{
+      AU.cattivo();
+      apriSheet(`<h3>😴 Quanto tempo!</h3>
+        <p>Sono passati <b>${esito.giorni} giorni</b> dall'ultima volta. ${esc(S.nomeAvatar)} nel frattempo ha ripreso <b>${esito.malus.toFixed(1)} kg</b>.</p>
+        <p>Nessun dramma: si recupera in una sessione. La regola d'oro è non saltare mai due giorni di fila.</p>
+        <button class="btn full big" data-close>Rimettiamoci in moto 💪</button>`);
+    },600);
+  }
+
+  // musica: parte al primo tocco (i browser lo richiedono)
+  const sblocca=()=>{
+    AU.ensure();
+    if(S.audio.musica && !AU.on) AU.musicaOn();
+    removeEventListener('pointerdown',sblocca); removeEventListener('keydown',sblocca);
+  };
+  addEventListener('pointerdown',sblocca); addEventListener('keydown',sblocca);
+
+  // rientro nell'app: controlla se è cambiato giorno
+  addEventListener('visibilitychange',()=>{
+    if(document.hidden){ AU.musicaOff(); return; }
+    if(!S.onboarded) return;
+    const esito2=controlloGiorno();
+    render();
+    if(S.audio.musica) AU.musicaOn();
+    if(esito2) toast('Hai saltato qualche giorno 😴', `${S.nomeAvatar} ha ripreso ${esito2.malus.toFixed(1)} kg`, 'warn');
+  });
+
+  if('serviceWorker' in navigator)
+    addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js').catch(()=>{}));
+}
+
+document.addEventListener('DOMContentLoaded', avvia);
+window.FQ = { get stato(){return S;}, salva, render, azzera(){ localStorage.removeItem(SAVE_KEY); location.reload(); } };
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "Forma Quest — la tua avventura leggera",
+  "short_name": "Forma Quest",
+  "description": "Trasforma movimento e buone scelte a tavola in un gioco: il tuo avatar dimagrisce insieme a te.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eaf7f0",
+  "theme_color": "#eaf7f0",
+  "lang": "it",
+  "dir": "ltr",
+  "categories": ["health", "fitness", "lifestyle", "games"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
