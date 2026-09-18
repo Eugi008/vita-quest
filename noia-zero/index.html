@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#07131f" />
+<title>Noia Zero</title>
+<meta name="description" content="Mini-giochi rapidi da un dito: gioca offline dal telefono nei momenti noiosi." />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<style>
+:root{
+  --bg:#07131f; --bg2:#0d1f31; --panel:#12283d; --panel2:#17344e; --line:#1f4463;
+  --ink:#eaf6ff; --muted:#8fb0c9;
+  --hot:#ff5d73; --lime:#3ddc97; --sun:#ffd166; --sky:#4cc9f0; --grape:#b388ff;
+  --r:18px; --shadow:0 12px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:radial-gradient(1000px 500px at 50% -15%, #1b3d5c 0%, var(--bg) 62%) fixed;
+  color:var(--ink); -webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none; touch-action:manipulation; user-select:none;
+}
+.app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;
+  padding:calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));gap:12px}
+.hidden{display:none !important}
+button{font:inherit;color:inherit;border:none;background:none;cursor:pointer}
+
+/* ---------- Home ---------- */
+.logo{text-align:center;margin-top:18px}
+.logo h1{margin:0;font-size:44px;letter-spacing:-1.5px;
+  background:linear-gradient(100deg,var(--sun),var(--hot) 45%,var(--grape));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.logo p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+  border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.big-btn{display:block;width:100%;padding:18px;border-radius:var(--r);font-size:20px;font-weight:800;
+  background:linear-gradient(120deg,var(--hot),#ff8a5b);color:#2a0713;box-shadow:0 10px 24px rgba(255,93,115,.3);
+  transition:transform .08s}
+.big-btn:active{transform:scale(.97)}
+.big-btn.alt{background:linear-gradient(120deg,var(--sky),var(--grape));color:#06182a;box-shadow:0 10px 24px rgba(76,201,240,.25)}
+.big-btn small{display:block;font-size:12px;font-weight:600;opacity:.75;margin-top:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:10px 6px}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left}
+.mini b{display:block;font-size:15px}
+.mini span{font-size:11px;color:var(--muted)}
+.mini .em{font-size:22px}
+h2{margin:0 0 10px;font-size:15px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- HUD ---------- */
+.hud{display:flex;align-items:center;gap:10px}
+.hud .score{font-size:26px;font-weight:900;min-width:64px}
+.hud .lives{font-size:18px;letter-spacing:2px}
+.combo{margin-left:auto;font-size:13px;font-weight:800;color:var(--sun)}
+.bar{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar > i{display:block;height:100%;width:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--lime),var(--sun),var(--hot));transition:width .1s linear}
+.bar.low > i{background:var(--hot)}
+
+/* ---------- Stage ---------- */
+.stage{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0}
+.prompt{text-align:center;font-size:20px;font-weight:800;min-height:28px}
+.prompt small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-top:2px}
+.board{position:relative;flex:1;min-height:260px;border-radius:var(--r);border:1px solid var(--line);
+  background:rgba(255,255,255,.03);overflow:hidden;display:flex;align-items:center;justify-content:center;padding:12px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.opt{padding:20px 8px;border-radius:14px;font-size:24px;font-weight:800;
+  background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);transition:transform .08s}
+.opt:active{transform:scale(.96)}
+.opt.good{background:var(--lime);color:#04231a}
+.opt.bad{background:var(--hot);color:#2a0713}
+.target{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff6,transparent 60%),linear-gradient(140deg,var(--hot),var(--sun));
+  box-shadow:0 8px 20px rgba(0,0,0,.4);font-size:26px;animation:pop .18s ease-out}
+.target.bomb{background:radial-gradient(circle at 35% 30%,#fff3,transparent 60%),linear-gradient(140deg,#4a5568,#1f2733)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:300px}
+.tile{aspect-ratio:1;border-radius:16px;border:1px solid var(--line);opacity:.5;transition:opacity .12s,transform .12s}
+.tile.on{opacity:1;transform:scale(1.04)}
+.tile:nth-child(1){background:var(--hot)} .tile:nth-child(2){background:var(--sky)}
+.tile:nth-child(3){background:var(--lime)} .tile:nth-child(4){background:var(--sun)}
+.gridpick{display:grid;gap:8px;width:100%;max-width:320px}
+.gridpick button{aspect-ratio:1;font-size:26px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.word{font-size:46px;font-weight:900;letter-spacing:-1px}
+.tapzone{position:absolute;inset:0}
+.flash{position:absolute;inset:0;pointer-events:none;opacity:0}
+.flash.ok{background:rgba(61,220,151,.22);animation:fade .35s}
+.flash.ko{background:rgba(255,93,115,.28);animation:fade .35s}
+@keyframes fade{from{opacity:1}to{opacity:0}}
+.float{position:absolute;left:50%;top:40%;transform:translateX(-50%);font-size:30px;font-weight:900;
+  pointer-events:none;animation:up .6s ease-out forwards}
+@keyframes up{from{opacity:1;top:42%}to{opacity:0;top:24%}}
+.count-emo{font-size:30px;line-height:1.35;text-align:center;word-break:break-all}
+
+/* ---------- Over ---------- */
+.over{text-align:center}
+.over .big{font-size:56px;font-weight:900;line-height:1}
+.over .lbl{color:var(--muted);font-size:13px}
+.newbest{color:var(--sun);font-weight:800;margin-top:6px}
+.row{display:flex;gap:10px}
+.row > *{flex:1}
+.ghost{padding:14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-weight:700}
+.topbar{display:flex;align-items:center;gap:8px}
+.topbar .back{padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:13px}
+.topbar .title{font-weight:800}
+.tip{font-size:12px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME -->
+  <section id="home">
+    <div class="logo">
+      <h1>Noia Zero</h1>
+      <p>7 mini-giochi da un dito. Offline. 3 vite per partita.</p>
+    </div>
+    <div style="height:18px"></div>
+    <button class="big-btn" id="playRush">GIOCA <small>Sfida infinita · tutti i minigiochi</small></button>
+    <div style="height:10px"></div>
+    <button class="big-btn alt" id="playZen">ALLENAMENTO <small>Scegli un singolo minigioco</small></button>
+    <div style="height:16px"></div>
+    <div class="card">
+      <h2>I tuoi record</h2>
+      <div class="stats">
+        <div class="stat"><b id="sBest">0</b><span>record</span></div>
+        <div class="stat"><b id="sStreak">0</b><span>combo max</span></div>
+        <div class="stat"><b id="sGames">0</b><span>partite</span></div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <p class="tip">Suggerimento: aggiungi alla schermata Home e giochi anche senza rete ✈️</p>
+  </section>
+
+  <!-- SCELTA MINIGIOCO -->
+  <section id="pick" class="hidden">
+    <div class="topbar"><button class="back" id="pickBack">‹ Indietro</button><span class="title">Allenamento</span></div>
+    <div style="height:12px"></div>
+    <div class="grid" id="pickGrid"></div>
+  </section>
+
+  <!-- GIOCO -->
+  <section id="game" class="hidden stage">
+    <div class="hud">
+      <div class="score" id="gScore">0</div>
+      <div class="lives" id="gLives">❤️❤️❤️</div>
+      <div class="combo" id="gCombo"></div>
+      <button class="back" id="quitBtn" style="padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12px">Esci</button>
+    </div>
+    <div class="bar" id="gBar"><i></i></div>
+    <div class="prompt" id="gPrompt"></div>
+    <div class="board" id="gBoard"></div>
+  </section>
+
+  <!-- FINE -->
+  <section id="over" class="hidden">
+    <div style="height:24px"></div>
+    <div class="card over">
+      <div class="lbl">Punteggio</div>
+      <div class="big" id="oScore">0</div>
+      <div class="lbl" id="oSub"></div>
+      <div class="newbest hidden" id="oBest">🏆 NUOVO RECORD!</div>
+    </div>
+    <div style="height:14px"></div>
+    <button class="big-btn" id="againBtn">RIGIOCA</button>
+    <div style="height:10px"></div>
+    <div class="row"><button class="ghost" id="homeBtn">Menu</button><button class="ghost" id="shareBtn">Condividi</button></div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== Utility ===================== */
+const $ = (s)=>document.querySelector(s);
+const rnd = (n)=>Math.floor(Math.random()*n);
+const pick = (a)=>a[rnd(a.length)];
+const shuffle = (a)=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+function buzz(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
+
+/* --- audio (bip sintetici, nessun file) --- */
+let AC=null;
+function beep(freq,dur,type){
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type||"triangle"; o.frequency.value=freq;
+    g.gain.setValueAtTime(.0001,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.18,AC.currentTime+.01);
+    g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+(dur||.12));
+    o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+(dur||.12)+.02);
+  }catch(e){}
+}
+
+/* --- salvataggio locale --- */
+const KEY="noia-zero-v1";
+let save = {best:0, streak:0, games:0, minis:{}};
+try{ Object.assign(save, JSON.parse(localStorage.getItem(KEY)||"{}")); }catch(e){}
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(save)); }catch(e){} }
+
+/* ===================== Minigiochi ===================== */
+/* Ogni minigioco riceve (board, level, done). done(true|false). */
+
+const EMO_SET = ["🍕","🐸","👾","🚀","🍋","🎈","🐙","🍩","⭐","🌵","🦊","🎩","🔥","🐝","🍄","💎"];
+const COLORS = [
+  {n:"ROSSO",  c:"#ff5d73"}, {n:"VERDE", c:"#3ddc97"},
+  {n:"GIALLO", c:"#ffd166"}, {n:"BLU",   c:"#4cc9f0"},
+  {n:"VIOLA",  c:"#b388ff"}
+];
+
+function optionsBoard(board, labels, correctIndex, done, style){
+  const wrap=document.createElement("div"); wrap.className="opts";
+  labels.forEach((lab,i)=>{
+    const b=document.createElement("button"); b.className="opt"; b.innerHTML=lab;
+    if(style) style(b,i);
+    b.addEventListener("click",()=>{
+      if(wrap.dataset.locked) return; wrap.dataset.locked="1";
+      b.classList.add(i===correctIndex?"good":"bad");
+      done(i===correctIndex);
+    },{passive:true});
+    wrap.appendChild(b);
+  });
+  board.appendChild(wrap);
+}
+
+const MINIS = {
+
+  /* 1 — tocca il bersaglio (ed evita le bombe) */
+  tap:{ emo:"🎯", name:"Bersaglio", desc:"Tocca il cerchio, schiva le bombe", time:(l)=>2600-Math.min(1200,l*70),
+    run(board,level,done){
+      board.innerHTML="";
+      const bombs = clamp(Math.floor(level/3),0,4);
+      const size = clamp(110-level*3,54,110);
+      const place = (el)=>{
+        const w=board.clientWidth-size-8, h=board.clientHeight-size-8;
+        el.style.width=el.style.height=size+"px";
+        el.style.left=(4+rnd(Math.max(1,w)))+"px"; el.style.top=(4+rnd(Math.max(1,h)))+"px";
+      };
+      const spots=[];
+      const far=(x,y)=>spots.every(s=>Math.hypot(s.x-x,s.y-y)>size*0.95);
+      const make=(isBomb)=>{
+        const el=document.createElement("button");
+        el.className="target"+(isBomb?" bomb":"");
+        el.textContent=isBomb?"💣":"🎯";
+        let tries=0;
+        do{ place(el); tries++; }
+        while(tries<30 && !far(parseInt(el.style.left),parseInt(el.style.top)));
+        spots.push({x:parseInt(el.style.left),y:parseInt(el.style.top)});
+        el.addEventListener("click",()=>done(!isBomb),{passive:true});
+        board.appendChild(el);
+      };
+      for(let i=0;i<bombs;i++) make(true);
+      make(false);
+    }},
+
+  /* 2 — Stroop: il COLORE, non la parola */
+  color:{ emo:"🎨", name:"Colore", desc:"Tocca il colore dell'inchiostro", time:(l)=>3200-Math.min(1500,l*90),
+    run(board,level,done){
+      board.innerHTML="";
+      const word=pick(COLORS); let ink=pick(COLORS);
+      while(ink.n===word.n) ink=pick(COLORS);
+      const w=document.createElement("div");
+      w.className="word"; w.textContent=word.n; w.style.color=ink.c;
+      w.style.marginBottom="16px";
+      const box=document.createElement("div");
+      box.style.cssText="display:flex;flex-direction:column;align-items:center;width:100%";
+      box.appendChild(w); board.appendChild(box);
+      const opts=shuffle(COLORS.slice()).slice(0,4);
+      if(!opts.some(o=>o.n===ink.n)) opts[0]=ink;
+      shuffle(opts);
+      const idx=opts.findIndex(o=>o.n===ink.n);
+      optionsBoard(box, opts.map(o=>o.n), idx, done, (b,i)=>{ b.style.color=opts[i].c; });
+    }},
+
+  /* 3 — matematica lampo */
+  math:{ emo:"➗", name:"Calcolo", desc:"Risolvi al volo", time:(l)=>4200-Math.min(2000,l*110),
+    run(board,level,done){
+      board.innerHTML="";
+      const hard=clamp(4+level*2,6,60);
+      let a=1+rnd(hard), b=1+rnd(hard), op=pick(level>4?["+","-","×"]:["+","-"]);
+      if(op==="×"){ a=2+rnd(9); b=2+rnd(9); }
+      if(op==="-" && b>a) [a,b]=[b,a];
+      const res = op==="+"?a+b : op==="-"?a-b : a*b;
+      const q=document.createElement("div");
+      q.className="word"; q.textContent=`${a} ${op} ${b}`; q.style.marginBottom="16px";
+      const box=document.createElement("div");
+      box.style.cssText="display:flex;flex-direction:column;align-items:center;width:100%";
+      box.appendChild(q); board.appendChild(box);
+      const set=new Set([res]);
+      while(set.size<4){ const d=res + (rnd(2)?1:-1)*(1+rnd(Math.max(3,Math.round(res*.3)))); if(d>=0) set.add(d); }
+      const opts=shuffle([...set]);
+      optionsBoard(box, opts.map(String), opts.indexOf(res), done);
+    }},
+
+  /* 4 — conta le emoji */
+  count:{ emo:"🔢", name:"Conta", desc:"Quante ne vedi?", time:(l)=>4600-Math.min(2200,l*120),
+    run(board,level,done){
+      board.innerHTML="";
+      const hero=pick(EMO_SET);
+      let noise=pick(EMO_SET); while(noise===hero) noise=pick(EMO_SET);
+      const n = 2+rnd(clamp(3+level,3,9));
+      const total = n + 4 + rnd(8+level*2);
+      const cells=[];
+      for(let i=0;i<n;i++) cells.push(hero);
+      while(cells.length<total) cells.push(noise);
+      shuffle(cells);
+      const box=document.createElement("div");
+      box.style.cssText="display:flex;flex-direction:column;align-items:center;width:100%;gap:14px";
+      const view=document.createElement("div");
+      view.className="count-emo"; view.textContent=cells.join("");
+      const lab=document.createElement("div");
+      lab.style.cssText="font-size:14px;color:var(--muted)";
+      lab.innerHTML=`Quanti <span style="font-size:22px">${hero}</span>?`;
+      box.appendChild(view); box.appendChild(lab); board.appendChild(box);
+      const set=new Set([n]);
+      while(set.size<4){ const d=n+(rnd(2)?1:-1)*(1+rnd(3)); if(d>0) set.add(d); }
+      const opts=shuffle([...set]);
+      optionsBoard(box, opts.map(String), opts.indexOf(n), done);
+    }},
+
+  /* 5 — memoria (tipo Simon) */
+  memo:{ emo:"🧠", name:"Memoria", desc:"Ripeti la sequenza", time:(l)=>3000+Math.min(3000,l*140),
+    run(board,level,done){
+      board.innerHTML="";
+      const wrap=document.createElement("div"); wrap.className="tiles";
+      const tiles=[];
+      for(let i=0;i<4;i++){
+        const t=document.createElement("button"); t.className="tile"; t.disabled=true;
+        wrap.appendChild(t); tiles.push(t);
+      }
+      board.appendChild(wrap);
+      const len=clamp(2+Math.floor(level/2),2,6);
+      const seq=[]; for(let i=0;i<len;i++) seq.push(rnd(4));
+      const freqs=[330,415,495,590];
+      let step=0;
+      const show=()=>{
+        if(step>=seq.length){
+          tiles.forEach(t=>t.disabled=false);
+          MINIS.memo.onReady && MINIS.memo.onReady();
+          return;
+        }
+        const t=tiles[seq[step]];
+        t.classList.add("on"); beep(freqs[seq[step]],.16);
+        setTimeout(()=>{ t.classList.remove("on"); step++; setTimeout(show,140); },320);
+      };
+      let i=0;
+      tiles.forEach((t,idx)=>t.addEventListener("click",()=>{
+        if(t.disabled) return;
+        t.classList.add("on"); beep(freqs[idx],.12);
+        setTimeout(()=>t.classList.remove("on"),140);
+        if(seq[i]!==idx){ tiles.forEach(x=>x.disabled=true); return done(false); }
+        i++;
+        if(i>=seq.length){ tiles.forEach(x=>x.disabled=true); done(true); }
+      },{passive:true}));
+      setTimeout(show,320);
+      return {blindMs: 320 + len*460 + 200};
+    }},
+
+  /* 6 — trova l'intruso */
+  odd:{ emo:"🔍", name:"Intruso", desc:"Trova quella diversa", time:(l)=>4200-Math.min(2000,l*110),
+    run(board,level,done){
+      board.innerHTML="";
+      const n = clamp(2+Math.floor(level/2),2,5);   // griglia n x n
+      const base=pick(EMO_SET);
+      const alts={"🍕":"🍔","🐸":"🐢","👾":"🤖","🚀":"✈️","🍋":"🍐","🎈":"🎉","🐙":"🦑","🍩":"🥯",
+                  "⭐":"✨","🌵":"🌲","🦊":"🐱","🎩":"👒","🔥":"💥","🐝":"🦋","🍄":"🌸","💎":"🔷"};
+      const odd=alts[base]||"❓";
+      const total=n*n, target=rnd(total);
+      const g=document.createElement("div"); g.className="gridpick";
+      g.style.gridTemplateColumns=`repeat(${n},1fr)`;
+      for(let i=0;i<total;i++){
+        const b=document.createElement("button"); b.textContent=(i===target?odd:base);
+        b.addEventListener("click",()=>{
+          if(g.dataset.locked) return; g.dataset.locked="1";
+          done(i===target);
+        },{passive:true});
+        g.appendChild(b);
+      }
+      board.appendChild(g);
+    }},
+
+  /* 7 — semaforo: tocca solo al verde */
+  wait:{ emo:"🚦", name:"Riflessi", desc:"Tocca SOLO al verde", time:(l)=>4200,
+    run(board,level,done){
+      board.innerHTML="";
+      const light=document.createElement("div");
+      light.style.cssText="width:140px;height:140px;border-radius:50%;background:var(--hot);"+
+        "box-shadow:0 0 50px rgba(255,93,115,.5);display:flex;align-items:center;justify-content:center;font-size:44px";
+      light.textContent="✋";
+      board.appendChild(light);
+      const zone=document.createElement("button"); zone.className="tapzone"; board.appendChild(zone);
+      let green=false, timer=null;
+      const delay = 600+rnd(1500);
+      const window_ = clamp(1100-level*45,420,1100);
+      timer=setTimeout(()=>{
+        green=true;
+        light.style.background="var(--lime)";
+        light.style.boxShadow="0 0 60px rgba(61,220,151,.6)";
+        light.textContent="👆"; beep(880,.1);
+        timer=setTimeout(()=>{ if(green){ green=false; done(false);} }, window_);
+      }, delay);
+      zone.addEventListener("click",()=>{
+        clearTimeout(timer);
+        if(green){ green=false; done(true); }
+        else done(false);
+      },{passive:true});
+      return {cleanup:()=>clearTimeout(timer)};
+    }}
+};
+
+const MINI_KEYS = Object.keys(MINIS);
+
+/* ===================== Motore di gioco ===================== */
+const G = {
+  mode:"rush", only:null, score:0, lives:3, combo:0, bestCombo:0,
+  level:0, rounds:0, timer:null, raf:null, deadline:0, limit:0, active:false, cleanup:null
+};
+
+const board=$("#gBoard"), promptEl=$("#gPrompt"), barEl=$("#gBar"), barFill=$("#gBar > i");
+
+function show(id){
+  ["home","pick","game","over"].forEach(s=>$("#"+s).classList.toggle("hidden", s!==id));
+}
+
+function startGame(mode, only){
+  G.mode=mode; G.only=only||null;
+  G.score=0; G.lives=3; G.combo=0; G.bestCombo=0; G.level=0; G.rounds=0; G.active=true;
+  beep(520,.08);
+  show("game"); updateHud(); nextRound();
+}
+
+function updateHud(){
+  $("#gScore").textContent=G.score;
+  $("#gLives").textContent="❤️".repeat(G.lives)+"🖤".repeat(3-G.lives);
+  $("#gCombo").textContent = G.combo>1 ? "🔥 x"+G.combo : "";
+}
+
+function stopTimers(){
+  if(G.raf) cancelAnimationFrame(G.raf); G.raf=null;
+  if(G.timer) clearTimeout(G.timer); G.timer=null;
+  if(G.cleanup){ try{G.cleanup();}catch(e){} G.cleanup=null; }
+}
+
+function nextRound(){
+  if(!G.active) return;
+  stopTimers();
+  const key = G.only || pick(MINI_KEYS);
+  const mini = MINIS[key];
+  G.level = G.mode==="rush" ? Math.floor(G.rounds/2) : Math.floor(G.rounds/2);
+  promptEl.innerHTML = `${mini.emo} ${mini.name}<small>${mini.desc}</small>`;
+  board.innerHTML="";
+  let answered=false;
+  const finish=(ok)=>{
+    if(answered||!G.active) return; answered=true;
+    stopTimers(); resolve(ok);
+  };
+  const info = mini.run(board, G.level, finish) || {};
+  G.cleanup = info.cleanup || null;
+  // il tempo parte dopo l'eventuale fase di "sola visione" (memoria)
+  const limit = Math.max(900, mini.time(G.level));
+  const begin=()=>{
+    if(answered||!G.active) return;
+    G.limit=limit; G.deadline=performance.now()+limit;
+    tick();
+    G.timer=setTimeout(()=>finish(false), limit+60);
+  };
+  barFill.style.width="100%"; barEl.classList.remove("low");
+  if(info.blindMs){ setTimeout(begin, info.blindMs); } else begin();
+}
+
+function tick(){
+  const left = G.deadline - performance.now();
+  const pct = clamp(left/G.limit,0,1);
+  barFill.style.width=(pct*100).toFixed(1)+"%";
+  barEl.classList.toggle("low", pct<0.25);
+  if(left>0 && G.active) G.raf=requestAnimationFrame(tick);
+}
+
+function floatText(txt,color){
+  const f=document.createElement("div"); f.className="float"; f.textContent=txt; f.style.color=color;
+  board.appendChild(f); setTimeout(()=>f.remove(),620);
+}
+function flash(ok){
+  const f=document.createElement("div"); f.className="flash "+(ok?"ok":"ko");
+  board.appendChild(f); setTimeout(()=>f.remove(),380);
+}
+
+function resolve(ok){
+  const speedLeft = clamp((G.deadline-performance.now())/G.limit,0,1);
+  if(ok){
+    G.combo++; G.bestCombo=Math.max(G.bestCombo,G.combo);
+    const pts = 10 + Math.round(speedLeft*20) + Math.min(30,(G.combo-1)*3);
+    G.score+=pts;
+    flash(true); floatText("+"+pts,"var(--lime)"); beep(720,.1); buzz(18);
+  }else{
+    G.combo=0; G.lives--;
+    flash(false); floatText("✕","var(--hot)"); beep(160,.22,"sawtooth"); buzz([40,50,40]);
+  }
+  G.rounds++;
+  updateHud();
+  if(G.lives<=0){ setTimeout(gameOver,520); return; }
+  setTimeout(nextRound, ok?420:620);
+}
+
+function gameOver(){
+  G.active=false; stopTimers();
+  save.games=(save.games||0)+1;
+  const newBest = G.mode==="rush" && G.score>(save.best||0);
+  if(newBest) save.best=G.score;
+  if(G.bestCombo>(save.streak||0)) save.streak=G.bestCombo;
+  if(G.only){
+    save.minis=save.minis||{};
+    if(G.score>(save.minis[G.only]||0)) save.minis[G.only]=G.score;
+  }
+  persist(); refreshHome();
+  $("#oScore").textContent=G.score;
+  $("#oSub").textContent = `${G.rounds} prove · combo max ${G.bestCombo}` + (G.mode==="rush"?` · record ${save.best}`:"");
+  $("#oBest").classList.toggle("hidden", !newBest);
+  beep(300,.3,"sine");
+  show("over");
+}
+
+/* ===================== UI ===================== */
+function refreshHome(){
+  $("#sBest").textContent=save.best||0;
+  $("#sStreak").textContent=save.streak||0;
+  $("#sGames").textContent=save.games||0;
+}
+
+function buildPick(){
+  const g=$("#pickGrid"); g.innerHTML="";
+  MINI_KEYS.forEach(k=>{
+    const m=MINIS[k];
+    const b=document.createElement("button"); b.className="mini";
+    const rec=(save.minis&&save.minis[k])||0;
+    b.innerHTML=`<div class="em">${m.emo}</div><b>${m.name}</b><span>${m.desc}<br>record ${rec}</span>`;
+    b.addEventListener("click",()=>startGame("zen",k),{passive:true});
+    g.appendChild(b);
+  });
+}
+
+$("#playRush").addEventListener("click",()=>startGame("rush"));
+$("#playZen").addEventListener("click",()=>{ buildPick(); show("pick"); });
+$("#pickBack").addEventListener("click",()=>show("home"));
+$("#quitBtn").addEventListener("click",()=>{ G.active=false; stopTimers(); show("home"); });
+$("#againBtn").addEventListener("click",()=>startGame(G.mode,G.only));
+$("#homeBtn").addEventListener("click",()=>show("home"));
+$("#shareBtn").addEventListener("click",async ()=>{
+  const txt=`Ho fatto ${G.score} punti a Noia Zero 🎮 (combo max ${G.bestCombo}). Battimi!`;
+  try{
+    if(navigator.share) await navigator.share({text:txt});
+    else { await navigator.clipboard.writeText(txt); $("#shareBtn").textContent="Copiato ✓"; setTimeout(()=>$("#shareBtn").textContent="Condividi",1500); }
+  }catch(e){}
+});
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden && G.active){ G.active=false; stopTimers(); show("home"); }
+});
+
+refreshHome();
+
+/* service worker */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
+}
+})();
+</script>
+</body>
+</html>
